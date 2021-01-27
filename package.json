@@ -1,0 +1,12 @@
+{
+  "name": "Sumr-Lambda-Dev-SES",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "promise-mysql": "^4.1.3"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "locally": "node -e \"console.log(require('./index').handler({}));\""
+  }
+}
