@@ -275,7 +275,7 @@ const Oth_Init = async function(event){
     var data={e:'no'};
     const message = JSON.stringify( event );
 
-    let save = await DBSave({DBSelector
+    let save = await DBSave({
         q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${message}')`
     });
 
