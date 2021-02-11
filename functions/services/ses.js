@@ -291,9 +291,10 @@ const Oth_Init = async function(event){
 
 exports.Service_SES = async function(event){
 
-    const message = JSON.parse(event.Records[0].Sns.Message);
+    //const decoded = JSON.parse(event.Records[0].Sns.Message);
+
     let result = '';
-    let type = message.notificationType;
+    let type = event.Records[0].Sns.Message.notificationType ;
 
     if(type == 'Delivery'){
 

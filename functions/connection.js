@@ -2,6 +2,7 @@
 const mysql = require('promise-mysql');
 const { isN, mySecrets } = require('./common');
 
+var Connection = ''
 
 const Connect = async(p=null)=>{
 
@@ -92,7 +93,7 @@ exports.DBSelector = (v=null, d=null)=>{
 },
 
 exports.cls = async function(p){
-	this.cnx.end(function(){
+	Connection.end(function(){
 		//console.log(' Conexion cerrada \n\n');
 	});
 },
@@ -103,24 +104,24 @@ exports.DBGet = async function(p=null){
 
 		let svle = [];
 		let rsp = {};
-		let cnx = await this.Connect({ t:'rd' });
+		Connection = await Connect({ t:'rd' });
 
 		if(!isN(p.d)){ svle = p.d; }
 
-		if(!isN(cnx)){
+		if(!isN(Connection)){
 			try {
 
 				let qry = mysql.format(p.q, svle);
-				let prc = await cnx.query(qry);
+				let prc = await Connection.query(qry);
 
 				if(prc){ rsp = prc; }
 
 			}catch(ex){
-				await cnx.query("ROLLBACK");
+				await Connection.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				await cnx.release();
-				await cnx.destroy();
+				await Connection.release();
+				await Connection.destroy();
 			}
 		}
 
@@ -136,23 +137,23 @@ exports.DBSave = async function(p=null){
 
 		let svle = [];
 		let rsp = {e:'no'};
-		let cnx = await this.Connect({t:'wrt'});
+		Connection = await Connect({t:'wrt'});
 
-		if(!isN(cnx)){
+		if(!isN(Connection)){
 
 			try {
 
 				if(!isN(p.d)){ svle = p.d; }
 				let qry = mysql.format(p.q, svle);
-				let prc = await cnx.query(qry);
+				let prc = await Connection.query(qry);
 				if(prc){ rsp = prc; }
 
 			}catch(ex){
-				await cnx.query("ROLLBACK");
+				await Connection.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				await cnx.release();
-				await cnx.destroy();
+				await Connection.release();
+				await Connection.destroy();
 			}
 
 		}
