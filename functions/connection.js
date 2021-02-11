@@ -7,7 +7,7 @@ const Connect = async(p=null)=>{
 
 	var host,user,password,port;
 
-	if(process.env.NODE.env !== 'production' && process.env.NODE.env !== 'developer'){
+	if(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'developer'){
 
 		host = process.env.RDS_HOST;
 		user = process.env.RDS_USERNAME;

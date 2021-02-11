@@ -1,4 +1,4 @@
-if(process.env.NODE.env !== 'production' && process.env.NODE.env !== 'developer'){
+if(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'developer'){
     require('dotenv').config({ path: '/.env/.env.local' });
 }
 
