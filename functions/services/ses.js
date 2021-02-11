@@ -3,9 +3,9 @@ const   mysql = require('promise-mysql'),
         { isN } = require('../common'),
         { ListDetail } = require('../system'),
         { CustomerDetail } = require('../customer'),
-        { LeadEmailDetail } = require('../lead'),
-        { UserDetail } = require('../user'),
-        { CustomerSendDetail, LeadSendDetail } = require('../mailing');
+        { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
+        { UserDetail, UserUpdate } = require('../user'),
+        { CustomerSendDetail, CustomerSendUpdate, LeadSendDetail, LeadSendUpdate } = require('../mailing');
 
 
 
@@ -174,7 +174,7 @@ const Complaint_Init = async function(event){
                 var eml = message.complaint.complainedRecipients[key].emailAddress;
                 var eml_dt = await LeadEmailDetail({ id:eml, t:'eml' });
 
-                var upd = await LeadEmailUpdated({
+                var upd = await LeadEmailUpdate({
                     id:eml_dt.id,
                     f:{
                         rjct: 1,
