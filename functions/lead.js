@@ -1,5 +1,5 @@
 const { DBGet, DBSave, DBSelector } = require('./connection');
-
+const { isN } = require('./common');
 exports.LeadEmailDetail = async function(p=null){
 
     let fld,

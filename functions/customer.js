@@ -1,4 +1,5 @@
 const { DBGet, DBSelector } = require('./connection');
+const { isN } = require('./common');
 
 exports.CustomerDetail = async function(p=null){
 
