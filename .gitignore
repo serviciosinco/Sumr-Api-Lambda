@@ -1,4 +1,4 @@
-_env/
+.env/
 
 
 # Node template

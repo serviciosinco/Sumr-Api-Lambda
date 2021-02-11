@@ -1,10 +1,9 @@
-if(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'developer'){
-    require('dotenv').config({ path: '/_env/.env.local' });
+if(process.env.NODE.env !== 'production' && process.env.NODE.env !== 'developer'){
+    require('dotenv').config({ path: '/.env/.env.local' });
 }
 
-const SUMR_f = require('./_fnc/glbl'),
-      SUMR_db = require('./_fnc/db'),
-      SUMR_ses = require('./_fnc/ses');
+const { isN, Path, TimeNow } = require('./functions/common');
+const { Service_SES } = require('./functions/services/ses');
 
 exports.handler = async (event, context, callback) => {
 
@@ -12,24 +11,26 @@ exports.handler = async (event, context, callback) => {
 
     try {
 
-        if( !SUMR_f.isN(event) ){
+        if( !isN(event) ){
 
             let get = event.queryStringParameters;
-            let pm1 = SUMR_f.pml(event.path, 1);
-            let pm2 = SUMR_f.pml(event.path, 2);
-            let pm3 = SUMR_f.pml(event.path, 3);
+            let pm1 = Path(event.path, 1);
+            let pm2 = Path(event.path, 2);
+            let pm3 = Path(event.path, 3);
 
-            if(!SUMR_f.isN(pm1) && pm1 == 'v2'){
+            if(!isN(pm1) && pm1 == 'v2'){
 
-                if(!SUMR_f.isN(pm2) && pm2 == 'time'){
-                    data = SUMR_f.tmenow();
+                if(!isN(pm2) && pm2 == 'time'){
+                    data = TimeNow();
                 }
 
-            }else if( !SUMR_f.isN(event.Records) && !SUMR_f.isN(event.Records[0].Sns) ){
-                data = await SUMR_ses.init(event);
+            }else if( !isN(event.Records) && !isN(event.Records[0].Sns) ){ // SNS Handler
+
+                data = await Service_SES(event);
+
             }
 
-            if(!SUMR_f.isN(get) && !SUMR_f.isN(get.callback)){
+            if(!isN(get) && !isN(get.callback)){
 
                 let dataj = JSON.stringify(data);
 
