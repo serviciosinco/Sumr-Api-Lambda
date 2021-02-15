@@ -339,7 +339,7 @@ const Click_Init = async function(event){
     var data={e:'no'};
     const message = JSON.parse(event.Records[0].Sns.Message);
 
-    let msave = JSON.stringify(msave);
+    let msave = JSON.stringify(message);
     let clickTags = JSON.stringify(message.click.linkTags);
 
     let save = await DBSave({
