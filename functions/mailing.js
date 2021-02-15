@@ -67,6 +67,45 @@ exports.CustomerSendUpdate = async function(p=null){
 
 
 
+exports.CustomerSendOpened = async function(p=null){
+
+    let rsp={e:'no'};
+
+    if(!isN(p.bd)){
+
+        var open_device = AwsDeviceId(p.f.medium);
+
+        let save = await DBSave({
+            q:`INSERT INTO `+DBSelector('_cl_flj_snd_op')+`(clfljsndop_snd, eclfljsndop_f, clfljsndop_h, clfljsndop_m, clfljsndop_brw_t, clfljsndop_brw_v, clfljsndop_brw_p) VALUES (?,?,?,?,?,?,?)`,
+            d:[ 
+                p.f.snd,
+                p.f.date,
+                p.f.hour,
+                open_device,
+                p.f.browser.name,
+                p.f.browser.version,
+                p.f.browser.platform
+            ]
+        });
+
+        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0 && save.insertId){
+            rsp.e = 'ok';
+            rsp.id = save.insertId;
+        }else {
+            if(save.w.errno && save.w.sqlMessage){
+				rsp['w'] = save.w.sqlMessage;
+            }
+        }
+
+    }
+
+    return rsp;
+
+};
+
+
+
+
 exports.LeadSendDetail = async function(p=null){
 
     let fld,

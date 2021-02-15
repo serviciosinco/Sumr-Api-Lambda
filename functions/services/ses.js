@@ -4,7 +4,7 @@ const   { DBSave, DBSelector } = require('../connection'),
         { CustomerDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
-        { CustomerSendDetail, CustomerSendUpdate, LeadSendDetail, LeadSendUpdate, LeadSendOpened } = require('../mailing'),
+        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened } = require('../mailing'),
         userAgent = require('user-agent-parse');
 
 
@@ -283,22 +283,29 @@ const Open_Init = async function(event){
         
         if(!isN(snd_dt.id)){
 
-            let upd = await CustomerSendUpdate({
+            let insert = await CustomerSendOpened({
                 id:snd_dt.id,
                 f:{
-                    est: process.env.ID_SNDEST_RBT,
-                    bnc: JSON.stringify(message.bounce),
-                    bnc_sbj: event.Records[0].Sns.Subject,
-                    bnc_msg: message.bounce.bouncedRecipients[0].diagnosticCode,
-                    bnc_rpr: message.bounce.reportingMTA,
-                    bnc_tp: tp_id.id,
-                    bnc_tp_sub: tps_id.id
+                    snd:snd_dt.id,
+                    date:datetme.d.date,
+                    hour:datetme.d.time,
+                    medium:'',
+                    browser:{
+                        name:uAgnt.name,
+                        version:uAgnt.version,
+                        platform:uAgnt.os
+                    }
                 }
             });
 
-            if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
+            if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
                 data['e'] = 'ok';
+                data['id'] = insert.id;
+            }else{
+                data['w'] = insert.w;
             }
+
+
 
         }
 
@@ -347,11 +354,15 @@ const Click_Init = async function(event){
     var data={e:'no'};
     const message = JSON.parse(event.Records[0].Sns.Message);
 
-    let msave = JSON.stringify(message);
-    let clickTags = JSON.stringify(message.click.linkTags);
+    var ttobd = '';
+    let clickTags = message.click.linkTags;
+    
+    clickTags.forEach(element => { 
+        ttobd = ttobd + JSON.stringify( element );
+    });
 
     let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq,raw,field) VALUES ('${clickTags}','${message.click.link}','${msave}')`
+        q:`INSERT INTO `+DBSelector('____RQ')+`(rq,raw,field) VALUES ('${ttobd}')`
     });
 
     if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
