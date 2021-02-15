@@ -143,8 +143,13 @@ exports.DBSave = async function(p=null){
 
 			try {
 
-				if(!isN(p.d)){ svle = p.d; }
-				let qry = mysql.format(p.q, svle);
+				if(!isN(p.d)){
+					svle = p.d; 
+					var qry = mysql.format(p.q, svle);
+				}else{
+					var qry = p.q;
+				}
+
 				let prc = await Connection.query(qry);
 				if(prc){ rsp = prc; }
 

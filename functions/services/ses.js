@@ -1,5 +1,5 @@
 const   { DBSave, DBSelector } = require('../connection'),
-        { isN } = require('../common'),
+        { isN, getTimefromISO } = require('../common'),
         { ListDetail } = require('../system'),
         { CustomerDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
@@ -275,26 +275,12 @@ const Open_Init = async function(event){
     const message = JSON.parse(event.Records[0].Sns.Message);
     let header = Headers(message.mail.headers);
     let messageId = message.mail.messageId;
+    let uAgnt = userAgent.parse(message.open.userAgent);
 
-    var uAgnt = userAgent.parse(message.open.userAgent); console.log( uAgnt );
-
-    let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${uAgnt.name}')`
-    });
-    
-
-    if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
-        data['e'] = 'ok';
-    }else {
-        data['w'] = 'No ID result';
-    }
-
-    return data;
-    
     if(header['SUMR-FLJ'] == 'cl'){
 
         let snd_dt = await CustomerSendDetail({ id:messageId, t:'id' });
-        /*
+        
         if(!isN(snd_dt.id)){
 
             let upd = await CustomerSendUpdate({
@@ -314,26 +300,29 @@ const Open_Init = async function(event){
                 data['e'] = 'ok';
             }
 
-        }*/
+        }
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
         let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
         let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        let datetme = getTimefromISO(message.open.timestamp);
 
-        /*if(!isN(snd_dt.id) && !isN(cl_dt.id)){
+        if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
             let upd = await LeadSendOpened({
                 id:snd_dt.id,
                 bd:cl_dt.sbd,
                 f:{
-                    est:process.env.ID_SNDEST_RBT,
-                    bnc: JSON.stringify(message.bounce),
-                    bnc_sbj: event.Records[0].Sns.Subject,
-                    bnc_msg: message.bounce.bouncedRecipients[0].diagnosticCode,
-                    bnc_rpr: message.bounce.reportingMTA,
-                    bnc_tp: tp_id.id,
-                    bnc_tp_sub: tps_id.id
+                    snd:snd_dt.id,
+                    date:datetme.d.date,
+                    hour:datetme.d.time,
+                    medium:'',
+                    browser:{
+                        name:uAgnt.name,
+                        version:uAgnt.version,
+                        platform:uAgnt.os
+                    }
                 }
             });
 
@@ -341,7 +330,7 @@ const Open_Init = async function(event){
                 data['e'] = 'ok';
             }
 
-        }*/
+        }
 
     }
 
