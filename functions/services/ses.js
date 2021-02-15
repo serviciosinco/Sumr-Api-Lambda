@@ -4,7 +4,8 @@ const   { DBSave, DBSelector } = require('../connection'),
         { CustomerDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
-        { CustomerSendDetail, CustomerSendUpdate, LeadSendDetail, LeadSendUpdate } = require('../mailing');
+        { CustomerSendDetail, CustomerSendUpdate, LeadSendDetail, LeadSendUpdate } = require('../mailing'),
+        parser = require('ua-parser-js');
 
 
 
@@ -268,13 +269,19 @@ const Bounce_Init = async function(event){
 
 
 const Open_Init = async function(event){
-
+    
     var data={e:'no'};
 
     const message = JSON.parse(event.Records[0].Sns.Message);
     let header = Headers(message.mail.headers);
     let messageId = message.mail.messageId;
 
+    var userAgent = JSON.stringify( parser(message.open.userAgent) );
+
+    let save = await DBSave({
+        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${userAgent}')`
+    });
+    
     if(header['SUMR-FLJ'] == 'cl'){
 
         let snd_dt = await CustomerSendDetail({ id:messageId, t:'id' });
