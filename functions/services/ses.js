@@ -334,6 +334,25 @@ const Open_Init = async function(event){
 };
 
 
+const Click_Init = async function(event){
+
+    var data={e:'no'};
+    const message = JSON.parse(event.Records[0].Sns.Message);
+    let click = message.click;
+
+    let save = await DBSave({
+        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${click}')`
+    });
+
+    if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
+        data['e'] = 'ok';
+    }else {
+        data['w'] = 'No ID result';
+    }
+
+    return data;
+
+};
 
 
 const Oth_Init = async function(event){

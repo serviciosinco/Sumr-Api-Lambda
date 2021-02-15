@@ -26,10 +26,10 @@ exports.ListDetail = async function(p=null){
 
             Object.keys(get).forEach(function(key){
 
-                var row = get[key];
-                var key_ls = row.sisslctp_key; 
-                var key_f_ls = row.sisslctpf_key;
-                var key_id = row.id_sisslc;
+                var row = get[key],
+                    key_ls = row.sisslctp_key,
+                    key_f_ls = row.sisslctpf_key,
+                    key_id = row.id_sisslc;
                         
                 if(isN( rsp.ls[key_id] )){ rsp.ls[key_id]={}; }
                 
