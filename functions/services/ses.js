@@ -5,7 +5,7 @@ const   { DBSave, DBSelector } = require('../connection'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
         { CustomerSendDetail, CustomerSendUpdate, LeadSendDetail, LeadSendUpdate } = require('../mailing'),
-        parser = require('ua-parser-js');
+        userAgent = require('user-agent');
 
 
 
@@ -276,11 +276,20 @@ const Open_Init = async function(event){
     let header = Headers(message.mail.headers);
     let messageId = message.mail.messageId;
 
-    var userAgent = JSON.stringify( parser(message.open.userAgent) );
+    var uAgnt = userAgent.parse(message.open.userAgent); console.log( uAgnt );
 
     let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${userAgent}')`
+        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${uAgnt.name}')`
     });
+    
+
+    if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
+        data['e'] = 'ok';
+    }else {
+        data['w'] = 'No ID result';
+    }
+
+    return data;
     
     if(header['SUMR-FLJ'] == 'cl'){
 
