@@ -278,7 +278,7 @@ const Open_Init = async function(event){
     if(header['SUMR-FLJ'] == 'cl'){
 
         let snd_dt = await CustomerSendDetail({ id:messageId, t:'id' });
-
+        /*
         if(!isN(snd_dt.id)){
 
             let upd = await CustomerSendUpdate({
@@ -298,14 +298,14 @@ const Open_Init = async function(event){
                 data['e'] = 'ok';
             }
 
-        }
+        }*/
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
         let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
         let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
 
-        if(!isN(snd_dt.id) && !isN(cl_dt.id)){
+        /*if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
             let upd = await LeadSendOpened({
                 id:snd_dt.id,
@@ -325,7 +325,7 @@ const Open_Init = async function(event){
                 data['e'] = 'ok';
             }
 
-        }
+        }*/
 
     }
 
@@ -341,7 +341,7 @@ const Click_Init = async function(event){
     let click = message.click;
 
     let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${click}')`
+        q:`INSERT INTO `+DBSelector('____RQ')+`(rq,raw) VALUES ('${click}','click')`
     });
 
     if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
