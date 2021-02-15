@@ -275,7 +275,7 @@ const Open_Init = async function(event){
     const message = JSON.parse(event.Records[0].Sns.Message);
     let header = Headers(message.mail.headers);
     let messageId = message.mail.messageId;
-    let uAgnt = userAgent.parse(message.open.userAgent);
+    var uAgnt = userAgent.parse(message.open.userAgent);
 
     if(header['SUMR-FLJ'] == 'cl'){
 
@@ -328,6 +328,8 @@ const Open_Init = async function(event){
 
             if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
                 data['e'] = 'ok';
+            }else{
+                data['w'] = upd.w;
             }
 
         }

@@ -19,6 +19,24 @@ exports.Path = (p,n)=>{
 	}
 };
 
+
+exports.AwsDeviceId = (device)=>{
+	
+	var id = '';
+
+	if(device == ''){
+		id = process.env.ID_SISDSP_MVL
+	}else if(device == ''){
+		id = process.env.ID_SISDSP_TBLT
+	}else if(device == ''){
+		id = process.env.ID_SISDSP_DSKTP
+	}else{
+		id = process.env.ID_SISDSP_DSKTP; 
+	}
+
+	return id;
+}
+
 exports.getTimefromISO = (d)=>{
 
 	let data = {};

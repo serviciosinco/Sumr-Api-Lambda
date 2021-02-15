@@ -1,6 +1,6 @@
 const mysql = require('promise-mysql');
 const { DBGet, DBSave, DBSelector } = require('./connection');
-const { isN } = require('./common');
+const { isN, AwsDeviceId } = require('./common');
 
 exports.CustomerSendDetail  = async function(p=null){
 
@@ -146,9 +146,10 @@ exports.LeadSendOpened = async function(p=null){
 
     let rsp={e:'no'};
 
-    if(!isN(p.id) && !isN(upd)){
+    if(!isN(p.bd)){
 
         if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
+        var open_device = AwsDeviceId(p.f.medium);
 
         let save = await DBSave({
             q:`INSERT INTO `+DBSelector('ec_op',bd)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p) VALUES (?,?,?,?,?,?,?)`,
@@ -156,17 +157,19 @@ exports.LeadSendOpened = async function(p=null){
                 p.f.snd,
                 p.f.date,
                 p.f.hour,
-                p.f.medium,
-                p.f.browse.name,
-                p.f.browse.version,
-                p.f.browse.platform
+                open_device,
+                p.f.browser.name,
+                p.f.browser.version,
+                p.f.browser.platform
             ]
         });
 
         if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
             rsp.e = 'ok';
         }else {
-            rsp['w'] = 'No ID result';
+            if(save.w.errno && save.w.sqlMessage){
+				rsp['w'] = save.w.sqlMessage;
+            }
         }
 
     }
