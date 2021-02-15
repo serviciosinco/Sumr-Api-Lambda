@@ -164,8 +164,9 @@ exports.LeadSendOpened = async function(p=null){
             ]
         });
 
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
+        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0 && save.insertId){
             rsp.e = 'ok';
+            rsp.id = save.insertId;
         }else {
             if(save.w.errno && save.w.sqlMessage){
 				rsp['w'] = save.w.sqlMessage;

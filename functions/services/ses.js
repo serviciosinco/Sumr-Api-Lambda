@@ -310,7 +310,7 @@ const Open_Init = async function(event){
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
-            let upd = await LeadSendOpened({
+            let insert = await LeadSendOpened({
                 id:snd_dt.id,
                 bd:cl_dt.sbd,
                 f:{
@@ -326,10 +326,11 @@ const Open_Init = async function(event){
                 }
             });
 
-            if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
+            if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
                 data['e'] = 'ok';
+                data['id'] = insert.id;
             }else{
-                data['w'] = upd.w;
+                data['w'] = insert.w;
             }
 
         }
