@@ -338,7 +338,7 @@ const Click_Init = async function(event){
 
     var data={e:'no'};
     const message = JSON.parse(event.Records[0].Sns.Message);
-    let click = JSON.parse(message.click.link.linkTags);
+    let click = JSON.parse(message.click.linkTags);
 
     let save = await DBSave({
         q:`INSERT INTO `+DBSelector('____RQ')+`(rq,raw) VALUES ('${click}','${message.click.link}')`
