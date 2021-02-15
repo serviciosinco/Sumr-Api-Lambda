@@ -4,8 +4,8 @@ const   { DBSave, DBSelector } = require('../connection'),
         { CustomerDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
-        { CustomerSendDetail, CustomerSendUpdate, LeadSendDetail, LeadSendUpdate } = require('../mailing'),
-        userAgent = require('user-agent');
+        { CustomerSendDetail, CustomerSendUpdate, LeadSendDetail, LeadSendUpdate, LeadSendOpened } = require('../mailing'),
+        userAgent = require('user-agent-parse');
 
 
 
