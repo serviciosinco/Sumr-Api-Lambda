@@ -380,7 +380,7 @@ exports.Service_SES = async function(event){
 
     let result = '';
     let message = JSON.parse(event.Records[0].Sns.Message);
-    let type = message.notificationType;
+    let type = message.eventType ? message.eventType : message.notificationType;
 
     if(type == 'Delivery'){
 
