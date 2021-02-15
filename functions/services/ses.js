@@ -338,10 +338,10 @@ const Click_Init = async function(event){
 
     var data={e:'no'};
     const message = JSON.parse(event.Records[0].Sns.Message);
-    let click = message.click.link;
+    let click = JSON.parse(message.click.link.linkTags);
 
     let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq,raw) VALUES ('${click}','click')`
+        q:`INSERT INTO `+DBSelector('____RQ')+`(rq,raw) VALUES ('${click}','${message.click.link}')`
     });
 
     if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
