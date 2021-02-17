@@ -217,3 +217,59 @@ exports.LeadSendOpened = async function(p=null){
     return rsp;
 
 };
+
+
+
+
+exports.LeadSendClicked = async function(p=null){
+
+    let rsp={e:'no'};
+
+    if(!isN(p.bd)){
+
+        if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
+        var open_device = AwsDeviceId(p.f.medium);
+
+        let save = await DBSave({
+            q:`INSERT INTO `+DBSelector('ec_trck',bd)+`(ectrck_lnk, ectrck_snd, ectrck_f, ectrck_h, ectrck_m, ectrck_brw_t, ectrck_brw_v, ectrck_brw_p) VALUES (?,?,?,?,?,?,?,?)`,
+            d:[ 
+                p.f.lnk,
+                p.f.snd,
+                p.f.date,
+                p.f.hour,
+                open_device,
+                p.f.browser.name,
+                p.f.browser.version,
+                p.f.browser.platform
+            ]
+        });
+
+        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0 && save.insertId){
+           
+            rsp.e = 'ok';
+            rsp.id = save.insertId;
+
+            let save_url = await DBSave({
+                q:`INSERT INTO `+DBSelector('ec_trck_attr',bd)+`(ectrckattr_ectrck, ectrckattr_key, ectrckattr_value) VALUES (?,?,?)`,
+                d:[ 
+                    rsp.id,
+                    'url',
+                    p.f.url
+                ]
+            });
+
+            if(!isN(save_url) && !isN(save_url.affectedRows) && save_url.affectedRows > 0 && save_url.insertId){
+                rsp.url = { id:save_url.insertId };
+            }
+
+        }else {
+            if(save.w.errno && save.w.sqlMessage){
+				rsp['w'] = save.w.sqlMessage;
+            }
+        }
+
+    }
+
+    return rsp;
+
+};

@@ -63,11 +63,10 @@ const BounceGetId = async function(p=null){
 
 const Delivery_Init = async function(event){
 
-    var data={e:'no'};
-
-    const message = JSON.parse(event.Records[0].Sns.Message);
-    let header = Headers(message.mail.headers);
-    let messageId = message.mail.messageId;
+    var data={e:'no'},
+        message = JSON.parse(event.Records[0].Sns.Message),
+        header = Headers(message.mail.headers),
+        messageId = message.mail.messageId;
 
     if(header['SUMR-FLJ'] == 'cl'){
 
@@ -129,11 +128,10 @@ const Delivery_Init = async function(event){
 
 const Complaint_Init = async function(event){
 
-    var data={e:'no'};
-
-    const message = JSON.parse(event.Records[0].Sns.Message);
-    let header = Headers(message.mail.headers);
-    let messageId = message.mail.messageId;
+    var data={e:'no'},
+        message = JSON.parse(event.Records[0].Sns.Message),
+        header = Headers(message.mail.headers),
+        messageId = message.mail.messageId;
 
     if(header['SUMR-FLJ'] == 'cl'){
 
@@ -201,13 +199,12 @@ const Complaint_Init = async function(event){
 
 const Bounce_Init = async function(event){
 
-    var data={e:'no'};
-
-    const message = JSON.parse(event.Records[0].Sns.Message);
-    let header = Headers(message.mail.headers);
-    let messageId = message.mail.messageId;
-    let tp_id = await BounceGetId({ key:message.bounce.bounceType });
-    let tps_id = await BounceGetId({ t:'sub', key:message.bounce.bounceSubType });
+    var data={e:'no'},
+        message = JSON.parse(event.Records[0].Sns.Message),
+        header = Headers(message.mail.headers),
+        messageId = message.mail.messageId,
+        tp_id = await BounceGetId({ key:message.bounce.bounceType }),
+        tps_id = await BounceGetId({ t:'sub', key:message.bounce.bounceSubType });
 
     if(header['SUMR-FLJ'] == 'cl'){
 
@@ -270,12 +267,11 @@ const Bounce_Init = async function(event){
 
 const Open_Init = async function(event){
     
-    var data={e:'no'};
-
-    const message = JSON.parse(event.Records[0].Sns.Message);
-    let header = Headers(message.mail.headers);
-    let messageId = message.mail.messageId;
-    var uAgnt = userAgent.parse(message.open.userAgent);
+    var data={e:'no'},
+        message = JSON.parse(event.Records[0].Sns.Message),
+        header = Headers(message.mail.headers),
+        messageId = message.mail.messageId,
+        uAgnt = userAgent.parse(message.open.userAgent);
 
     if(header['SUMR-FLJ'] == 'cl'){
 
@@ -289,7 +285,7 @@ const Open_Init = async function(event){
                     snd:snd_dt.id,
                     date:datetme.d.date,
                     hour:datetme.d.time,
-                    medium:'',
+                    medium:uAgnt.device_type,
                     browser:{
                         name:uAgnt.name,
                         version:uAgnt.version,
@@ -324,7 +320,7 @@ const Open_Init = async function(event){
                     snd:snd_dt.id,
                     date:datetme.d.date,
                     hour:datetme.d.time,
-                    medium:'',
+                    medium:uAgnt.device_type,
                     browser:{
                         name:uAgnt.name,
                         version:uAgnt.version,
@@ -351,24 +347,56 @@ const Open_Init = async function(event){
 
 const Click_Init = async function(event){
 
-    var data={e:'no'};
-    const message = JSON.parse(event.Records[0].Sns.Message);
+    var data={e:'no'},
+        message = JSON.parse(event.Records[0].Sns.Message),
+        header = Headers(message.mail.headers),
+        messageId = message.mail.messageId,
+        uAgnt = userAgent.parse(message.click.userAgent);
 
-    var ttobd = '';
-    let clickTags = message.click.linkTags;
+    if(header['SUMR-FLJ'] == 'cl'){
+
+    }else if(header['SUMR-FLJ'] == 'ec'){
+
+        let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
+        let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        let datetme = getTimefromISO(message.click.timestamp);
+
+        if(!isN(snd_dt.id) && !isN(cl_dt.id)){
+
+            clickTags = message.click.linkTags;
     
-    clickTags.forEach(element => { 
-        ttobd = ttobd + JSON.stringify( element );
-    });
+            if(clickTags){
+                clickTags.forEach(element => { 
+                    ttobd = ttobd + JSON.stringify( element );
+                });
+            }
 
-    let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq,raw,field) VALUES ('${ttobd}')`
-    });
+            let insert = await LeadSendClicked({
+                id:snd_dt.id,
+                bd:cl_dt.sbd,
+                f:{
+                    snd:snd_dt.id,
+                    url:message.click.link,
+                    date:datetme.d.date,
+                    hour:datetme.d.time,
+                    medium:uAgnt.device_type,
+                    browser:{
+                        name:uAgnt.name,
+                        version:uAgnt.version,
+                        platform:uAgnt.os
+                    }
+                }
+            });
 
-    if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
-        data['e'] = 'ok';
-    }else {
-        data['w'] = 'No ID result';
+            if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
+                data['e'] = 'ok';
+                data['id'] = insert.id;
+            }else{
+                data['w'] = insert.w;
+            }
+
+        }
+
     }
 
     return data;
@@ -396,8 +424,6 @@ const Oth_Init = async function(event){
 };
 
 exports.Service_SES = async function(event){
-
-    //const decoded = JSON.parse(event.Records[0].Sns.Message);
 
     let result = '';
     let message = JSON.parse(event.Records[0].Sns.Message);

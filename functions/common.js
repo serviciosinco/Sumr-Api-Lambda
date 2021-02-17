@@ -24,11 +24,11 @@ exports.AwsDeviceId = (device)=>{
 	
 	var id = '';
 
-	if(device == ''){
+	if(device == 'mobile'){
 		id = process.env.ID_SISDSP_MVL
-	}else if(device == ''){
+	}else if(device == 'tablet'){
 		id = process.env.ID_SISDSP_TBLT
-	}else if(device == ''){
+	}else if(device == 'desktop'){
 		id = process.env.ID_SISDSP_DSKTP
 	}else{
 		id = process.env.ID_SISDSP_DSKTP; 
