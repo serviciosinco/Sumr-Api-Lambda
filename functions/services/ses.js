@@ -4,7 +4,7 @@ const   { DBSave, DBSelector } = require('../connection'),
         { CustomerDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
-        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened } = require('../mailing'),
+        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked } = require('../mailing'),
         userAgent = require('user-agent-parse');
 
 
@@ -359,11 +359,12 @@ const Click_Init = async function(event){
 
         var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
             snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
-            datetme = getTimefromISO(message.click.timestamp);
+            datetme = getTimefromISO(message.click.timestamp),
+            ttobd = '';
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
-            clickTags = message.click.linkTags;
+            var clickTags = message.click.linkTags;
     
             if(clickTags){
                 clickTags.forEach(element => { 
