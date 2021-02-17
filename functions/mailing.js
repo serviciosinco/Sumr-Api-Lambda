@@ -165,7 +165,7 @@ exports.LeadSendUpdate = async function(p=null){
         if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
         let save = await DBSave({
-            q:`UPDATE `+DBSelector('ec_snd',bd)+` SET ${upd} WHERE id_ecsnd=?`,
+            q:`UPDATE `+DBSelector('ec_snd',bd)+` SET ${upd} WHERE id_ecsnd=? LIMIT 1`,
             d:[ p.id ]
         });
 
