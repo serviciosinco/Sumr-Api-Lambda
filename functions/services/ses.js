@@ -307,9 +307,9 @@ const Open_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
-        let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
-        let datetme = getTimefromISO(message.open.timestamp);
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
+            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
+            datetme = getTimefromISO(message.open.timestamp);
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
@@ -357,9 +357,9 @@ const Click_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
-        let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
-        let datetme = getTimefromISO(message.click.timestamp);
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
+            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
+            datetme = getTimefromISO(message.click.timestamp);
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
