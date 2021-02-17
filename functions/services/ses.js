@@ -21,6 +21,35 @@ const Headers = (h=null)=>{
 
 };
 
+
+const RecoverIdToBd = async function(p=null){
+    
+    let rsp={e:'no'};
+
+    if(!isN(p) && !isN(p.id) && !isN(p.bd) && !isN(p.cid)){
+
+        let upd = await LeadSendUpdate({
+            id:p.id,
+            bd:p.bd,
+            f:{
+                cid:p.cid
+            }
+        });
+
+        if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
+            rsp.e = 'ok';
+        }else{
+            rsp.w = upd.w;
+        }
+
+    }
+
+    return rsp;
+
+};
+
+
+
 const BounceGetId = async function(p=null){
 
     let detail = null,
@@ -87,8 +116,13 @@ const Delivery_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
-        let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });,
+            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+
+        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+        }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
@@ -160,11 +194,16 @@ const Complaint_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
-        let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
+            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+
+        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+        }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
-
+            
             Object.keys(message.complaint.complainedRecipients).forEach(async function(key){
 
                 var eml = message.complaint.complainedRecipients[key].emailAddress;
@@ -309,6 +348,11 @@ const Open_Init = async function(event){
             snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
             datetme = getTimefromISO(message.open.timestamp);
 
+        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+        }
+
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
             let insert = await LeadSendOpened({
@@ -359,6 +403,11 @@ const Click_Init = async function(event){
             snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
             datetme = getTimefromISO(message.click.timestamp),
             ttobd = '';
+
+        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+        }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 

@@ -142,6 +142,7 @@ exports.LeadSendUpdate = async function(p=null){
 
     if(!isN(p.f)){
         let upf=[];
+        if(!isN(p.f.cid)){ upf.push( mysql.format('ecsnd_id=?', p.f.cid) ); }
         if(!isN(p.f.est)){ upf.push( mysql.format('ecsnd_est=?', p.f.est) ); }
         if(!isN(p.f.dlvry_tmmls)){ upf.push( mysql.format('ecsnd_dlvry_tmmls=?', p.f.dlvry_tmmls) ); }
         if(!isN(p.f.dlvry_tmstmp)){ upf.push( mysql.format('ecsnd_dlvry_tmstmp=?', p.f.dlvry_tmstmp) ); }
