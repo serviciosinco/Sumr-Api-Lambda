@@ -116,7 +116,7 @@ const Delivery_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });,
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
             snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
 
         if(snd_dt.e == 'ok' && isN(snd_dt.id)){
@@ -270,8 +270,13 @@ const Bounce_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        let cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
-        let snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
+            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+
+        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+        }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
