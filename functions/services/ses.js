@@ -7,8 +7,6 @@ const   { DBSave, DBSelector } = require('../connection'),
         { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked } = require('../mailing'),
         userAgent = require('user-agent-parse');
 
-
-
 const Headers = (h=null)=>{
 
     var data=[];
