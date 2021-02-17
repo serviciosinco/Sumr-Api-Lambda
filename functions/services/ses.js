@@ -121,7 +121,9 @@ const Delivery_Init = async function(event){
 
         if(snd_dt.e == 'ok' && isN(snd_dt.id)){
             var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            }
         }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
@@ -199,7 +201,9 @@ const Complaint_Init = async function(event){
 
         if(snd_dt.e == 'ok' && isN(snd_dt.id)){
             var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            }
         }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
@@ -275,7 +279,9 @@ const Bounce_Init = async function(event){
 
         if(snd_dt.e == 'ok' && isN(snd_dt.id)){
             var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            }
         }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
@@ -355,7 +361,9 @@ const Open_Init = async function(event){
 
         if(snd_dt.e == 'ok' && isN(snd_dt.id)){
             var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            }
         }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){
@@ -411,7 +419,9 @@ const Click_Init = async function(event){
 
         if(snd_dt.e == 'ok' && isN(snd_dt.id)){
             var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+            }
         }
 
         if(!isN(snd_dt.id) && !isN(cl_dt.id)){

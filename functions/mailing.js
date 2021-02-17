@@ -118,7 +118,7 @@ exports.LeadSendDetail = async function(p=null){
     if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
     let get = await DBGet({
-                        q: `SELECT id_ecsnd FROM `+DBSelector('ec_snd',bd)+` WHERE ${fld}=? LIMIT 1`,
+                        q: `SELECT id_ecsnd, ecsnd_id FROM `+DBSelector('ec_snd',bd)+` WHERE ${fld}=? LIMIT 1`,
                         d:[ p.id ]
                     });
 
@@ -126,6 +126,7 @@ exports.LeadSendDetail = async function(p=null){
         rsp.e = 'ok';
         if(!isN(get[0])){
             rsp.id = get[0].id_ecsnd;
+            rsp.cid = get[0].ecsnd_id;
         }
     }else {
         rsp['w'] = 'No ID result';
