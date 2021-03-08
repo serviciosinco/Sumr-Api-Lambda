@@ -8,14 +8,14 @@ const Connect = async(p=null)=>{
 
 	var host,user,password,port;
 
-	if(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'developer'){
+	//if(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'developer'){
 
 		host = process.env.RDS_HOST;
 		user = process.env.RDS_USERNAME;
 		password = process.env.RDS_PASSWORD;
 		port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
 
-	}else{
+	/*}else{
 
 		let sm_type = process.env.RDS_SM_READ;
 		if(p.t == 'wrt'){ sm_type = process.env.RDS_SM_WRTE;}
@@ -28,7 +28,7 @@ const Connect = async(p=null)=>{
 			password = sm_data.password ? sm_data.password : 3306;
 		}
 
-	}
+	}*/
 
 	if(	!isN(p) &&
 		!isN(p.t) &&

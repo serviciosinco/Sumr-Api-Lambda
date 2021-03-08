@@ -1,6 +1,4 @@
-if(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'developer'){
-    require('dotenv').config({ path: '/.env/.env.local' });
-}
+require('dotenv').config({ path: '/.env/.env' });
 
 const { isN, Path, TimeNow } = require('./functions/common');
 const { Service_SES } = require('./functions/services/ses');
