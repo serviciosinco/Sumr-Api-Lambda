@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '/.env/.env' });
+require('dotenv').config({ path: './.env/.env' });
 
 const { isN, Path, TimeNow } = require('./functions/common');
 const { Service_SES } = require('./functions/services/ses');
