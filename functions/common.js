@@ -86,6 +86,7 @@ exports.TimeNow = ()=>{
 
 };
 
+/*
 exports.mySecrets = async(keyname)=>{
 
 	var AWS = require('aws-sdk'),
@@ -123,3 +124,4 @@ exports.mySecrets = async(keyname)=>{
 	}
 
 };
+*/

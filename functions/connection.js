@@ -1,6 +1,6 @@
 //const { Console } = require('console');
 const mysql = require('promise-mysql');
-const { isN, mySecrets } = require('./common');
+const { isN /*, mySecrets */} = require('./common');
 
 var Connection = ''
 
