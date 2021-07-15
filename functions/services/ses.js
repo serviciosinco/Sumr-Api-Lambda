@@ -471,7 +471,7 @@ const Oth_Init = async function(event){
 
     var data={e:'no'},
         AWS = require('aws-sdk'),
-        docClient = new AWS.DynamoDB.DocumentClient(),
+        docClient = new AWS.DynamoDB.DocumentClient();
 
     const timeElapsed = Date.now();
     const today = new Date(timeElapsed);
