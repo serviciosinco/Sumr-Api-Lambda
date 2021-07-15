@@ -472,15 +472,30 @@ const Oth_Init = async function(event){
     var data={e:'no'};
     const message = JSON.stringify( event );
 
-    let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${message}')`
-    });
+    var AWS = require('aws-sdk'),
+		region = "us-east-1";
 
-    if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
-        data['e'] = 'ok';
-    }else {
-        data['w'] = 'No ID result';
-    }
+    var docClient = new AWS.DynamoDB.DocumentClient();
+    var table = process.env.NODE_ENV=='production'?'prd-':'dev' + 'rqu';
+
+    const timeElapsed = Date.now();
+    const today = new Date(timeElapsed);
+
+    var params = {
+        TableName:table,
+        Item:{
+            rq: message,
+            date_in: today.toISOString()
+        }
+    };
+
+    docClient.put(params, function(err, data) {
+        if (err) {
+            data['w'] = JSON.stringify(err, null, 2);
+        } else {
+            data['e'] = 'ok';
+        }
+    });
 
     return data;
 
