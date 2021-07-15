@@ -469,22 +469,17 @@ const Click_Init = async function(event){
 
 const Oth_Init = async function(event){
 
-    var data={e:'no'};
-    const message = JSON.stringify( event );
-
-    var AWS = require('aws-sdk'),
-		region = "us-east-1";
-
-    var docClient = new AWS.DynamoDB.DocumentClient();
-    var table = process.env.NODE_ENV=='production'?'prd-':'dev' + 'rqu';
+    var data={e:'no'},
+        AWS = require('aws-sdk'),
+        docClient = new AWS.DynamoDB.DocumentClient(),
 
     const timeElapsed = Date.now();
     const today = new Date(timeElapsed);
 
     var params = {
-        TableName:table,
+        TableName:process.env.NODE_ENV=='production'?'prd-':'dev' + 'rqu',
         Item:{
-            rq: message,
+            rq: JSON.stringify( event ),
             date_in: today.toISOString()
         }
     };
