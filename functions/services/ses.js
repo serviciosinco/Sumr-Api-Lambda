@@ -5,7 +5,9 @@ const   { DBSave, DBSelector } = require('../connection'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
         { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked } = require('../mailing'),
-        userAgent = require('user-agent-parse');
+        userAgent = require('user-agent-parse'),
+        AWS = require('aws-sdk'),
+        docClient = new AWS.DynamoDB.DocumentClient();
 
 const Headers = (h=null)=>{
 
@@ -469,28 +471,25 @@ const Click_Init = async function(event){
 
 const Oth_Init = async function(event){
 
-    var data={e:'no'},
-        AWS = require('aws-sdk'),
-        docClient = new AWS.DynamoDB.DocumentClient();
-
-    const timeElapsed = Date.now();
-    const today = new Date(timeElapsed);
+    var data={e:'no'};
+    var date = new Date();
 
     var params = {
-        TableName:process.env.NODE_ENV=='production'?'prd-':'dev' + 'rqu',
+        TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
         Item:{
+            id: date.getTime().toString(),
             rq: JSON.stringify( event ),
-            date_in: today.toISOString()
+            date_in: date.toISOString()
         }
     };
+    
 
-    docClient.put(params, function(err, data) {
-        if (err) {
-            data['w'] = JSON.stringify(err, null, 2);
-        } else {
-            data['e'] = 'ok';
-        }
-    });
+    try {
+        await docClient.put(params).promise();
+        data['e'] = 'ok';
+    } catch (err) {
+        data['w'] = err;
+    }
 
     return data;
 
