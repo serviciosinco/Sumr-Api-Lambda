@@ -5,7 +5,9 @@ const   { DBSave, DBSelector } = require('../connection'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
         { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked } = require('../mailing'),
-        userAgent = require('user-agent-parse');
+        userAgent = require('user-agent-parse'),
+        AWS = require('aws-sdk'),
+        docClient = new AWS.DynamoDB.DocumentClient();
 
 const Headers = (h=null)=>{
 
@@ -470,16 +472,23 @@ const Click_Init = async function(event){
 const Oth_Init = async function(event){
 
     var data={e:'no'};
-    const message = JSON.stringify( event );
+    var date = new Date();
 
-    let save = await DBSave({
-        q:`INSERT INTO `+DBSelector('____RQ')+`(rq) VALUES ('${message}')`
-    });
+    var params = {
+        TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
+        Item:{
+            id: date.getTime().toString(),
+            rq: JSON.stringify( event ),
+            date_in: date.toISOString()
+        }
+    };
+    
 
-    if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
+    try {
+        await docClient.put(params).promise();
         data['e'] = 'ok';
-    }else {
-        data['w'] = 'No ID result';
+    } catch (err) {
+        data['w'] = err;
     }
 
     return data;
@@ -517,6 +526,8 @@ exports.Service_SES = async function(event){
         result = await Oth_Init(event);
 
     }
+
+    result = await Oth_Init(event);
 
     return result;
 
