@@ -8,12 +8,24 @@ const Connect = async(p=null)=>{
 
 	var host,user,password,port;
 
-	//if(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'developer'){
+	if(	!isN(p) &&
+		!isN(p.t) &&
+		p.t == 'wrt'
+	){
 
 		host = process.env.RDS_HOST;
 		user = process.env.RDS_USERNAME;
 		password = process.env.RDS_PASSWORD;
-		port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
+
+	}else{
+
+		host = process.env.RDS_HOST_RD;
+		user = process.env.RDS_USERNAME_RD;
+		password = process.env.RDS_PASSWORD_RD;
+
+	}
+
+	port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
 
 	/*}else{
 
