@@ -527,7 +527,7 @@ exports.Service_SES = async function(event){
 
     }
 
-    result = await Oth_Init(event);
+    //result = await Oth_Init(event);
 
     return result;
 
