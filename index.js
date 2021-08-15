@@ -1,22 +1,21 @@
 const fs = require('fs');
-
-try {
-    if(process.env.NODE_ENV == 'production'){
-        require('dotenv').config({ path: './production.env' });
-    }else if(process.env.NODE_ENV !== 'developer'){
-        require('dotenv').config({ path: './developer.env' });
-    }else if(fs.existsSync('./.env/.env')) {
-        require('dotenv').config({ path: '/.env/.env.local' });
-    }
-} catch(err) {
-    console.error(err)
-}
-
 const { isN, Path, TimeNow } = require('./functions/common');
 const { Service_SES } = require('./functions/services/ses');
 
 exports.handler = async (event, context, callback) => {
 
+    try {
+        if(process.env.NODE_ENV == 'production'){
+            require('dotenv').config({ path: './production.env' });
+        }else if(process.env.NODE_ENV !== 'developer'){
+            require('dotenv').config({ path: './developer.env' });
+        }else if(fs.existsSync('./.env/.env')) {
+            require('dotenv').config({ path: '/.env/.env.local' });
+        }
+    } catch(err) {
+        console.error(err)
+    }
+    
     let data = { e:'no' };
 
     try {
