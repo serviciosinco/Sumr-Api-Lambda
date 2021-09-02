@@ -12,17 +12,13 @@ const Connect = async(p=null)=>{
 		!isN(p.t) &&
 		p.t == 'wrt'
 	){
-
 		host = process.env.RDS_HOST;
 		user = process.env.RDS_USERNAME;
 		password = process.env.RDS_PASSWORD;
-
 	}else{
-
 		host = process.env.RDS_HOST_RD;
 		user = process.env.RDS_USERNAME_RD;
 		password = process.env.RDS_PASSWORD_RD;
-
 	}
 
 	port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
@@ -125,7 +121,6 @@ exports.DBGet = async function(p=null){
 
 				let qry = mysql.format(p.q, svle);
 				let prc = await Connection.query(qry);
-
 				if(prc){ rsp = prc; }
 
 			}catch(ex){
