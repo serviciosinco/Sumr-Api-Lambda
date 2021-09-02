@@ -49,7 +49,7 @@ exports.CustomerSendUpdate = async function(p=null){
     if(!isN(p.id) && !isN(upd)){
 
         let save = await DBSave({
-            q:`UPDATE `+DBSelector('_cl_flj_snd')+` SET ${upd} WHERE id_clfljsnd=?`,
+            q:`UPDATE `+DBSelector('_cl_flj_snd')+` SET ${upd} WHERE id_clfljsnd=? LIMIT 1`,
             d:[ p.id ]
         });
 

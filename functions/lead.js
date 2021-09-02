@@ -46,7 +46,7 @@ exports.LeadEmailUpdate = async function(p=null){
         if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
         let save = await DBSave({
-            q:`UPDATE `+DBSelector('cnt_eml',bd)+` SET ${upd} WHERE id_cnteml=?`,
+            q:`UPDATE `+DBSelector('cnt_eml',bd)+` SET ${upd} WHERE id_cnteml=? LIMIT 1`,
             d:[ p.id ]
         });
 
