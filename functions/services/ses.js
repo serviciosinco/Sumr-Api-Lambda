@@ -163,6 +163,22 @@ const Delivery_Init = async function(event){
 };
 
 const Complaint_Init = async function(event){
+    
+    try {
+
+        await docClient.put({
+            TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
+            Item:{
+                id: date.getTime().toString(),
+                rq: JSON.stringify( event ),
+                date_in: date.toISOString()
+            }
+        }).promise();
+
+    } catch (err) {
+        
+    }
+
 
     var data={e:'no'},
         message = JSON.parse(event.Records[0].Sns.Message),
