@@ -9,6 +9,34 @@ const   { DBSave, DBSelector } = require('../connection'),
         AWS = require('aws-sdk'),
         docClient = new AWS.DynamoDB.DocumentClient();
 
+
+const SaveRequest = async function(event){
+    
+    try {
+
+        if(!isN(event)){
+
+            var date = new Date();
+
+            return await docClient.put({
+                        TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
+                        Item:{
+                            id: date.getTime().toString(),
+                            rq: JSON.stringify( event ),
+                            date_in: date.toISOString()
+                        }
+                    }).promise();
+
+        }
+
+    } catch (err) {
+        
+        return false;
+
+    }
+
+}
+
 const Headers = (h=null)=>{
 
     var data=[];
@@ -164,23 +192,7 @@ const Delivery_Init = async function(event){
 
 const Complaint_Init = async function(event){
     
-    try {
-
-        var date = new Date();
-        
-        await docClient.put({
-            TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
-            Item:{
-                id: date.getTime().toString(),
-                rq: JSON.stringify( event ),
-                date_in: date.toISOString()
-            }
-        }).promise();
-
-    } catch (err) {
-        
-    }
-
+    await SaveRequest( event );
 
     var data={e:'no'},
         message = JSON.parse(event.Records[0].Sns.Message),
@@ -503,7 +515,7 @@ const Oth_Init = async function(event){
     
 
     try {
-        await docClient.put(params).promise();
+        await SaveRequest( event );
         data['e'] = 'ok';
     } catch (err) {
         data['w'] = err;
