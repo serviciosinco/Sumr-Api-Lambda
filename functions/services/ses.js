@@ -520,8 +520,6 @@ exports.Service_SES = async function(event){
         message = JSON.parse(event.Records[0].Sns.Message),
         type = message.eventType ? message.eventType : message.notificationType;
 
-    await SaveRequest( event );
-
     if(type == 'Delivery'){
 
         result = await Delivery_Init(event);
