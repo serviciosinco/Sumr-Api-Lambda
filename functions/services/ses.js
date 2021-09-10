@@ -19,7 +19,7 @@ const SaveRequest = async function(event){
             var date = new Date();
 
             return await docClient.put({
-                        TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
+                        TableName: (process.env.NODE_ENV == 'production' ? 'prd-':'dev-') + 'rqu',
                         Item:{
                             id: date.getTime().toString(),
                             rq: JSON.stringify( event ),
@@ -502,17 +502,6 @@ const Click_Init = async function(event){
 const Oth_Init = async function(event){
 
     var data={e:'no'};
-    var date = new Date();
-
-    var params = {
-        TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
-        Item:{
-            id: date.getTime().toString(),
-            rq: JSON.stringify( event ),
-            date_in: date.toISOString()
-        }
-    };
-    
 
     try {
         await SaveRequest( event );
