@@ -527,9 +527,10 @@ const Oth_Init = async function(event){
 
 exports.Service_SES = async function(event){
 
-    let result = '';
-    let message = JSON.parse(event.Records[0].Sns.Message);
-    let type = message.eventType ? message.eventType : message.notificationType;
+    let result = '',
+        message = JSON.parse(event.Records[0].Sns.Message),
+        type = message.eventType ? message.eventType : message.notificationType;
+
     await SaveRequest( event );
 
     if(type == 'Delivery'){
