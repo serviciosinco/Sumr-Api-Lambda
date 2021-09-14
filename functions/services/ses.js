@@ -572,7 +572,7 @@ exports.Service_SES = async function(event){
 
     }
 
-    await DBClose();
+    //await DBClose();
     //result = await Oth_Init(event);
 
     return result;
