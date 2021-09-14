@@ -71,8 +71,8 @@ exports.DBSelector = (v=null, d=null)=>{
 },
 
 exports.DBClose = async function(p){
-	if(!isN(CnxBusRd)){ await CnxBusRd.end(); }
-	if(!isN(CnxBusWrt)){ await CnxBusWrt.end(); }
+	//if(!isN(CnxBusRd)){ await CnxBusRd.end(); }
+	//if(!isN(CnxBusWrt)){ await CnxBusWrt.end(); }
 },
 
 exports.DBGet = async function(p=null){
