@@ -1,9 +1,10 @@
 //const { Console } = require('console');
-const mysql = require('promise-mysql');
+const mysql = require('mysql2');
 const { isN /*, mySecrets */} = require('./common');
 
-var Connection = '',
-	ConnectionType = '';
+var Connection,
+	ConnectionsPool,
+	ConnectionType;
 
 const Connect = async(p=null)=>{
 
@@ -51,8 +52,8 @@ const Connect = async(p=null)=>{
 
 			ConnectionType = p.t;
 			pool = await mysql.createPool(stng);
-			cnx = await pool.getConnection();
-			return cnx;
+			ConnectionsPool = pool.promise();
+			return true;
 
 		}catch(e){
 
