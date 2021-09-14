@@ -247,27 +247,36 @@ const Complaint_Init = async function(event){
             }
 
             if(!isN(snd_dt.id) && !isN(cl_dt.id)){
-                
-                Object.keys(message.complaint.complainedRecipients).forEach(async function(key){
 
-                    var eml = message.complaint.complainedRecipients[key].emailAddress;
-                    var eml_dt = await LeadEmailDetail({ id:eml, bd:cl_dt.sbd, t:'eml' });
+                (async function() {
 
-                    var upd = await LeadEmailUpdate({
-                        id:eml_dt.id,
-                        f:{
-                            rjct: 1,
-                            sndi: 2,
-                            dnc: message.complaint.complaintFeedbackType,
-                            cld: process.env.ID_CLD_BAD
+                    for await (let lead of message.complaint.complainedRecipients) {
+                        
+                        var eml = lead?.emailAddress;
+
+                        if(!isN(eml)){
+                            
+                            var eml_dt = await LeadEmailDetail({ id:eml, bd:cl_dt.sbd, t:'eml' });
+
+                            var upd = await LeadEmailUpdate({
+                                id:eml_dt.id,
+                                f:{
+                                    rjct: 1,
+                                    sndi: 2,
+                                    dnc: message.complaint.complaintFeedbackType,
+                                    cld: process.env.ID_CLD_BAD
+                                }
+                            });
+
+                            if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
+                                data['e'] = 'ok';
+                            }
+
                         }
-                    });
 
-                    if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                        data['e'] = 'ok';
                     }
 
-                });
+                })();
 
             }
         
