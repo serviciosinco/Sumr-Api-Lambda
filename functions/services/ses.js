@@ -96,7 +96,7 @@ const BounceGetId = async function(p=null){
 
         var attr = detail.ls[key];
 
-        if(attr.key.vl == p.key){
+        if(attr?.key?.vl == p.key){
 
             if(!isN(p.prnt)){
                 prnt = attr[p.prnt].vl;
