@@ -9,11 +9,9 @@ const Connect = async(p=null)=>{
 	var host,user,password,port;
 	port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
 
-	if(	!isN(p) &&
-		!isN(p.t) &&
-		!isN(host) &&
-		!isN(user) &&
-		!isN(password)
+	if(	
+		isN(CnxBusRd) || 
+		isN(CnxBusWrt)
 	){
 
 		let PoolRd, PoolWrt;
