@@ -64,6 +64,7 @@ const Connect = async(p=null)=>{
 				timeout         : 60 * 60 * 1000
 			};
 
+			ConnectionType = p.t;
 			pool = await mysql.createPool(stng);
 			cnx = pool.getConnection();
 			return cnx;
