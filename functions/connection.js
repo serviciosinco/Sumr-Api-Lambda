@@ -57,7 +57,7 @@ const Connect = async(p=null)=>{
 				user: user,
 				password: password,
 				port: port,
-				connectionLimit: 10,
+				connectionLimit: 30,
 			};
 
 			pool = await mysql.createPool(stng);
