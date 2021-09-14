@@ -85,7 +85,7 @@ exports.DBGet = async function(p=null){
 		var cnx;
 
 		if(isN(CnxBusRd)){
-			await Connect({ t:'rd' });
+			await Connect();
 		}
 
 		if(!isN(p.d)){ svle = p.d; }
@@ -118,12 +118,14 @@ exports.DBSave = async function(p=null){
 		let rsp = {e:'no'};
 
 		if(isN(CnxBusWrt)){
-			await Connect({t:'wrt'});
+			await Connect();
 		}
 
 		if(!isN(CnxBusWrt)){
 
 			try {
+
+				cnx = await CnxBusWrt.getConnection();
 
 				if(!isN(p.d)){
 					svle = p.d; 
@@ -132,14 +134,14 @@ exports.DBSave = async function(p=null){
 					var qry = p.q;
 				}
 
-				let prc = await CnxBusWrt.query(qry);
+				let prc = await cnx.query(qry);
 				if(prc){ rsp = prc; }
 
 			}catch(ex){
-				await CnxBusWrt.query("ROLLBACK");
+				await cnx.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				//await CnxBus.release();
+				await cnx.release();
 				//await CnxBus.destroy();
 			}
 
