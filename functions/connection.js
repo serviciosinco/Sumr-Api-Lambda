@@ -71,8 +71,8 @@ exports.DBSelector = (v=null, d=null)=>{
 },
 
 exports.DBClose = async function(p){
-	//if(!isN(CnxBusRd)){ await CnxBusRd.end(); }
-	//if(!isN(CnxBusWrt)){ await CnxBusWrt.end(); }
+	if(!isN(CnxBusRd)){ await CnxBusRd.end(); }
+	if(!isN(CnxBusWrt)){ await CnxBusWrt.end(); }
 },
 
 exports.DBGet = async function(p=null){
@@ -105,7 +105,7 @@ exports.DBGet = async function(p=null){
 			}catch(ex){
 				rsp.w = ex;
 			}finally{
-				await cnx.release();
+				if(!isN(cnx)){ await cnx.release(); }
 			}
 		}
 
@@ -147,7 +147,7 @@ exports.DBSave = async function(p=null){
 				await cnx.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				await cnx.release();
+				if(!isN(cnx)){ await cnx.release(); }
 			}
 
 		}
