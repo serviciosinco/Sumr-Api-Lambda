@@ -18,17 +18,17 @@ const Connect = async(p=null)=>{
 
 			CnxBusRd = await mysql.createPool({
 				database: 'sumr_bd',
-				host: process.env.RDS_HOST,
-				user: process.env.RDS_USERNAME,
-				password: process.env.RDS_PASSWORD,
+				host: process.env.RDS_HOST_RD,
+				user: process.env.RDS_USERNAME_RD,
+				password: process.env.RDS_PASSWORD_RD,
 				port: port
 			});
 
 			CnxBusWrt = await mysql.createPool({
 				database: 'sumr_bd',
-				host: process.env.RDS_HOST_RD,
-				user: process.env.RDS_USERNAME_RD,
-				password: process.env.RDS_PASSWORD_RD,
+				host: process.env.RDS_HOST,
+				user: process.env.RDS_USERNAME,
+				password: process.env.RDS_PASSWORD,
 				port: port
 			});
 
