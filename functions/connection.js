@@ -1,5 +1,5 @@
 //const { Console } = require('console');
-const mysql = require('mysql2');
+const mysql = require('promise-mysql');
 const { isN /*, mySecrets */} = require('./common');
 
 var CnxBusRd, CnxBusWrt;
