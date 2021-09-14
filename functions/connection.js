@@ -71,9 +71,8 @@ exports.DBSelector = (v=null, d=null)=>{
 },
 
 exports.DBClose = async function(p){
-	//CnxBus.end(error => error ? reject(error) : resolve());
-	//await CnxBus.release();
-	//await CnxBus.destroy();
+	if(!isN(CnxBusRd)){ await CnxBusRd.destroy(); }
+	if(!isN(CnxBusWrt)){ await CnxBusWrt.destroy(); }
 },
 
 exports.DBGet = async function(p=null){
@@ -100,14 +99,13 @@ exports.DBGet = async function(p=null){
 				}else{
 					var qry = p.q;
 				}
-				
+
 				let prc = await cnx.query(qry);
 				if(prc){ rsp = prc; }
 			}catch(ex){
 				rsp.w = ex;
 			}finally{
 				await cnx.release();
-				//await CnxBus.destroy();
 			}
 		}
 
@@ -150,7 +148,6 @@ exports.DBSave = async function(p=null){
 				rsp.w = ex;
 			}finally{
 				await cnx.release();
-				//await CnxBus.destroy();
 			}
 
 		}
