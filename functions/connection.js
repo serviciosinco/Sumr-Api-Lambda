@@ -2,27 +2,11 @@
 const mysql = require('mysql2');
 const { isN /*, mySecrets */} = require('./common');
 
-var Connection,
-	ConnectionsPool,
-	ConnectionType;
+var CnxBusRd, CnxBusWrt;
 
 const Connect = async(p=null)=>{
 
 	var host,user,password,port;
-
-	if(	!isN(p) &&
-		!isN(p.t) &&
-		p.t == 'wrt'
-	){
-		host = process.env.RDS_HOST;
-		user = process.env.RDS_USERNAME;
-		password = process.env.RDS_PASSWORD;
-	}else{
-		host = process.env.RDS_HOST_RD;
-		user = process.env.RDS_USERNAME_RD;
-		password = process.env.RDS_PASSWORD_RD;
-	}
-
 	port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
 
 	if(	!isN(p) &&
@@ -32,27 +16,29 @@ const Connect = async(p=null)=>{
 		!isN(password)
 	){
 
-		let stng,
-			pool,
-			cnx;
+		let PoolRd, PoolWrt;
 
 		try{
 
-			stng = {
+			PoolRd = await mysql.createPool({
 				database: 'sumr_bd',
-				host: host,
-				user: user,
-				password: password,
-				port: port,
-				connectionLimit : 1000,
-				connectTimeout  : 60 * 60 * 1000,
-				acquireTimeout  : 60 * 60 * 1000,
-				timeout         : 60 * 60 * 1000
-			};
+				host: process.env.RDS_HOST,
+				user: process.env.RDS_USERNAME,
+				password: process.env.RDS_PASSWORD,
+				port: port
+			});
 
-			ConnectionType = p.t;
-			pool = await mysql.createPool(stng);
-			ConnectionsPool = pool.promise();
+			PoolWrt = await mysql.createPool({
+				database: 'sumr_bd',
+				host: process.env.RDS_HOST_RD,
+				user: process.env.RDS_USERNAME_RD,
+				password: process.env.RDS_PASSWORD_RD,
+				port: port
+			});
+
+			CnxBusRd = PoolRd.promise();
+			CnxBusWrt = PoolWrt.promise();
+
 			return true;
 
 		}catch(e){
@@ -92,9 +78,9 @@ exports.DBSelector = (v=null, d=null)=>{
 },
 
 exports.DBClose = async function(p){
-	//Connection.end(error => error ? reject(error) : resolve());
-	await Connection.release();
-	await Connection.destroy();
+	//CnxBus.end(error => error ? reject(error) : resolve());
+	//await CnxBus.release();
+	//await CnxBus.destroy();
 },
 
 exports.DBGet = async function(p=null){
@@ -104,22 +90,30 @@ exports.DBGet = async function(p=null){
 		let svle = [];
 		let rsp = {};
 
-		if(isN(Connection) || ConnectionType == 'wrt'){
-			Connection = await Connect({ t:'rd' });
+		if(isN(CnxBusRd)){
+			await Connect({ t:'rd' });
 		}
 
 		if(!isN(p.d)){ svle = p.d; }
 
-		if(!isN(Connection)){
+		if(!isN(CnxBusRd)){
 			try {
-				let qry = mysql.format(p.q, svle);
-				let prc = await Connection.query(qry);
+
+				let prc = await CnxBusRd.prepare(p.q, (err, statement) => {
+					statement.execute(svle, (err, rows, columns) => {
+						console.log( rows );
+					});
+					statement.close();
+				});
+
+				let prc = await CnxBusRd.query(qry);
 				if(prc){ rsp = prc; }
+
 			}catch(ex){
 				rsp.w = ex;
 			}finally{
-				//await Connection.release();
-				//await Connection.destroy();
+				//await CnxBus.release();
+				//await CnxBus.destroy();
 			}
 		}
 
@@ -136,11 +130,11 @@ exports.DBSave = async function(p=null){
 		let svle = [];
 		let rsp = {e:'no'};
 
-		if(isN(Connection) || ConnectionType == 'rd'){
-			Connection = await Connect({t:'wrt'});
+		if(isN(CnxBusWrt)){
+			await Connect({t:'wrt'});
 		}
 
-		if(!isN(Connection)){
+		if(!isN(CnxBusWrt)){
 
 			try {
 
@@ -151,15 +145,15 @@ exports.DBSave = async function(p=null){
 					var qry = p.q;
 				}
 
-				let prc = await Connection.query(qry);
+				let prc = await CnxBus.query(qry);
 				if(prc){ rsp = prc; }
 
 			}catch(ex){
-				await Connection.query("ROLLBACK");
+				await CnxBus.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				//await Connection.release();
-				//await Connection.destroy();
+				//await CnxBus.release();
+				//await CnxBus.destroy();
 			}
 
 		}
