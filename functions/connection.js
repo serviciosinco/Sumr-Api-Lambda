@@ -2,7 +2,8 @@
 const mysql = require('promise-mysql');
 const { isN /*, mySecrets */} = require('./common');
 
-var Connection = ''
+var Connection = '',
+	ConnectionType = '';
 
 const Connect = async(p=null)=>{
 
@@ -104,7 +105,7 @@ exports.DBSelector = (v=null, d=null)=>{
 },
 
 exports.DBClose = async function(p){
-	Connection.end(error => error ? reject(error) : resolve());
+	//Connection.end(error => error ? reject(error) : resolve());
 	await Connection.destroy();
 },
 
@@ -114,7 +115,10 @@ exports.DBGet = async function(p=null){
 
 		let svle = [];
 		let rsp = {};
-		Connection = await Connect({ t:'rd' });
+
+		if(isN(Connection) || ConnectionType == 'wrt'){
+			Connection = await Connect({ t:'rd' });
+		}
 
 		if(!isN(p.d)){ svle = p.d; }
 
@@ -143,7 +147,10 @@ exports.DBSave = async function(p=null){
 
 		let svle = [];
 		let rsp = {e:'no'};
-		Connection = await Connect({t:'wrt'});
+
+		if(isN(Connection) || ConnectionType == 'rd'){
+			Connection = await Connect({t:'wrt'});
+		}
 
 		if(!isN(Connection)){
 
