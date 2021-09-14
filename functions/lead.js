@@ -19,7 +19,7 @@ exports.LeadEmailDetail = async function(p=null){
 
     if(result){
         rsp.e = 'ok';
-        if(!isN(get[0])){
+        if(!isN(result[0])){
             rsp.id = result[0].id_cnteml;
         }
     }else {

@@ -24,21 +24,6 @@ const Connect = async(p=null)=>{
 
 	port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
 
-	/*}else{
-
-		let sm_type = process.env.RDS_SM_READ;
-		if(p.t == 'wrt'){ sm_type = process.env.RDS_SM_WRTE;}
-		let sm_data = await mySecrets( sm_type );
-
-		if(	!isN(sm_data)){
-			host = sm_data.host;
-			port = sm_data.port;
-			user = sm_data.username;
-			password = sm_data.password ? sm_data.password : 3306;
-		}
-
-	}*/
-
 	if(	!isN(p) &&
 		!isN(p.t) &&
 		!isN(host) &&
@@ -66,7 +51,7 @@ const Connect = async(p=null)=>{
 
 			ConnectionType = p.t;
 			pool = await mysql.createPool(stng);
-			cnx = pool.getConnection();
+			cnx = await pool.getConnection();
 			return cnx;
 
 		}catch(e){
@@ -107,6 +92,7 @@ exports.DBSelector = (v=null, d=null)=>{
 
 exports.DBClose = async function(p){
 	//Connection.end(error => error ? reject(error) : resolve());
+	await Connection.release();
 	await Connection.destroy();
 },
 
@@ -131,7 +117,7 @@ exports.DBGet = async function(p=null){
 			}catch(ex){
 				rsp.w = ex;
 			}finally{
-				await Connection.release();
+				//await Connection.release();
 				//await Connection.destroy();
 			}
 		}
@@ -171,7 +157,7 @@ exports.DBSave = async function(p=null){
 				await Connection.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				await Connection.release();
+				//await Connection.release();
 				//await Connection.destroy();
 			}
 
