@@ -104,9 +104,7 @@ exports.DBSelector = (v=null, d=null)=>{
 },
 
 exports.cls = async function(p){
-	Connection.end(function(){
-		//console.log(' Conexion cerrada \n\n');
-	});
+	Connection.end(error => error ? reject(error) : resolve());
 },
 
 exports.DBGet = async function(p=null){
