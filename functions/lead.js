@@ -1,3 +1,4 @@
+const mysql = require('promise-mysql');
 const { DBGet, DBSave, DBSelector } = require('./connection');
 const { isN } = require('./common');
 
