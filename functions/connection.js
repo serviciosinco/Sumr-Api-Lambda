@@ -6,7 +6,7 @@ var CnxBusRd, CnxBusWrt;
 
 const Connect = async(p=null)=>{
 
-	var host,user,password,port;
+	var port;
 	port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
 
 	if(	
@@ -14,11 +14,9 @@ const Connect = async(p=null)=>{
 		isN(CnxBusWrt)
 	){
 
-		let PoolRd, PoolWrt;
-
 		try{
 
-			PoolRd = await mysql.createPool({
+			CnxBusRd = await mysql.createPool({
 				database: 'sumr_bd',
 				host: process.env.RDS_HOST,
 				user: process.env.RDS_USERNAME,
@@ -26,16 +24,13 @@ const Connect = async(p=null)=>{
 				port: port
 			});
 
-			PoolWrt = await mysql.createPool({
+			CnxBusWrt = await mysql.createPool({
 				database: 'sumr_bd',
 				host: process.env.RDS_HOST_RD,
 				user: process.env.RDS_USERNAME_RD,
 				password: process.env.RDS_PASSWORD_RD,
 				port: port
 			});
-
-			CnxBusRd = PoolRd.promise();
-			CnxBusWrt = PoolWrt.promise();
 
 			return true;
 
@@ -87,6 +82,7 @@ exports.DBGet = async function(p=null){
 
 		let svle = [];
 		let rsp = {};
+		var cnx;
 
 		if(isN(CnxBusRd)){
 			await Connect({ t:'rd' });
@@ -96,12 +92,14 @@ exports.DBGet = async function(p=null){
 
 		if(!isN(CnxBusRd)){
 			try {
-				let prc = await CnxBusRd.execute(p.q, svle);
+				cnx = await CnxBusRd.getConnection();
+				let qry = mysql.format(p.q, svle);
+				let prc = await cnx.query(qry);
 				if(prc){ rsp = prc; }
 			}catch(ex){
 				rsp.w = ex;
 			}finally{
-				//await CnxBus.release();
+				await cnx.release();
 				//await CnxBus.destroy();
 			}
 		}
