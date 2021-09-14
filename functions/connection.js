@@ -128,7 +128,7 @@ exports.DBGet = async function(p=null){
 				await Connection.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				await Connection.release();
+				await Connection.release(error => error ? reject(error) : resolve());
 				await Connection.destroy();
 			}
 		}
@@ -165,7 +165,7 @@ exports.DBSave = async function(p=null){
 				await Connection.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
-				await Connection.release();
+				await Connection.release(error => error ? reject(error) : resolve());
 				await Connection.destroy();
 			}
 
