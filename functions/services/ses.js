@@ -7,7 +7,7 @@ const   { DBSave, DBSelector } = require('../connection'),
         { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked } = require('../mailing'),
         userAgent = require('user-agent-parse'),
         AWS = require('aws-sdk'),
-        docClient = new AWS.DynamoDB.DocumentClient();
+        docClient = new AWS.DynamoDB({ apiVersion: '2012-08-10' });
 
 
 const SaveRequest = async function(event){
@@ -251,7 +251,7 @@ const Complaint_Init = async function(event){
                 Object.keys(message.complaint.complainedRecipients).forEach(async function(key){
 
                     var eml = message.complaint.complainedRecipients[key].emailAddress;
-                    var eml_dt = await LeadEmailDetail({ id:eml, t:'eml' });
+                    var eml_dt = await LeadEmailDetail({ id:eml, bd:cl_dt.sbd, t:'eml' });
 
                     var upd = await LeadEmailUpdate({
                         id:eml_dt.id,
