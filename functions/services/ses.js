@@ -258,6 +258,7 @@ const Complaint_Init = async function(event){
 
                         var upd = await LeadEmailUpdate({
                             id:eml_dt.id,
+                            bd:cl_dt.sbd,
                             f:{
                                 rjct: 1,
                                 sndi: 2,
