@@ -1,5 +1,5 @@
 //const { Console } = require('console');
-const mysql = require('mysql2');
+const mysql = require('promise-mysql');
 const { isN /*, mySecrets */} = require('./common');
 
 var CnxBusRd, CnxBusWrt;
@@ -98,17 +98,9 @@ exports.DBGet = async function(p=null){
 
 		if(!isN(CnxBusRd)){
 			try {
-
-				let prc = await CnxBusRd.prepare(p.q, (err, statement) => {
-					statement.execute(svle, (err, rows, columns) => {
-						console.log( rows );
-					});
-					statement.close();
-				});
-
+				let qry = mysql.format(p.q, svle);
 				let prc = await CnxBusRd.query(qry);
 				if(prc){ rsp = prc; }
-
 			}catch(ex){
 				rsp.w = ex;
 			}finally{
@@ -145,11 +137,11 @@ exports.DBSave = async function(p=null){
 					var qry = p.q;
 				}
 
-				let prc = await CnxBus.query(qry);
+				let prc = await CnxBusWrt.query(qry);
 				if(prc){ rsp = prc; }
 
 			}catch(ex){
-				await CnxBus.query("ROLLBACK");
+				await CnxBusWrt.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
 				//await CnxBus.release();

@@ -1,4 +1,4 @@
-const   mysql = require('mysql2'),
+const   mysql = require('promise-mysql'),
         { DBGet, DBSelector } = require('./connection'),
         { isN } = require('./common');
 

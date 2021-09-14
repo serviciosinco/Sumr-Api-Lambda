@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('promise-mysql');
 const { DBGet, DBSave, DBSelector } = require('./connection');
 const { isN, AwsDeviceId } = require('./common');
 
