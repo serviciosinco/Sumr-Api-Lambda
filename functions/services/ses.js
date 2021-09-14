@@ -1,4 +1,4 @@
-const   { DBSave, DBSelector } = require('../connection'),
+const   { DBSave, DBSelector, DBClose } = require('../connection'),
         { isN, getTimefromISO } = require('../common'),
         { ListDetail } = require('../system'),
         { CustomerDetail } = require('../customer'),
@@ -566,6 +566,7 @@ exports.Service_SES = async function(event){
 
     }
 
+    await DBClose();
     //result = await Oth_Init(event);
 
     return result;

@@ -103,8 +103,9 @@ exports.DBSelector = (v=null, d=null)=>{
 	return r;
 },
 
-exports.cls = async function(p){
+exports.DBClose = async function(p){
 	Connection.end(error => error ? reject(error) : resolve());
+	await Connection.destroy();
 },
 
 exports.DBGet = async function(p=null){
@@ -119,17 +120,14 @@ exports.DBGet = async function(p=null){
 
 		if(!isN(Connection)){
 			try {
-
 				let qry = mysql.format(p.q, svle);
 				let prc = await Connection.query(qry);
 				if(prc){ rsp = prc; }
-
 			}catch(ex){
-				await Connection.query("ROLLBACK");
 				rsp.w = ex;
 			}finally{
 				await Connection.release();
-				await Connection.destroy();
+				//await Connection.destroy();
 			}
 		}
 
@@ -166,7 +164,7 @@ exports.DBSave = async function(p=null){
 				rsp.w = ex;
 			}finally{
 				await Connection.release();
-				await Connection.destroy();
+				//await Connection.destroy();
 			}
 
 		}
