@@ -193,7 +193,7 @@ exports.LeadSendOpened = async function(p=null){
         var open_device = AwsDeviceId(p.f.medium);
 
         let save = await DBSave({
-            q:`INSERT INTO `+DBSelector('ec_op',bd)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p) VALUES (?,?,?,?,?,?,?)`,
+            q:`INSERT INTO `+DBSelector('ec_op',bd)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p, ecop_ip) VALUES (?,?,?,?,?,?,?,?)`,
             d:[ 
                 p.f.snd,
                 p.f.date,
@@ -201,7 +201,8 @@ exports.LeadSendOpened = async function(p=null){
                 open_device,
                 p.f.browser.name,
                 p.f.browser.version,
-                p.f.browser.platform
+                p.f.browser.platform,
+                p.f.ip
             ]
         });
 

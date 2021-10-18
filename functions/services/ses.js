@@ -372,7 +372,8 @@ const Open_Init = async function(event){
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId,
-        uAgnt = userAgent.parse(message.open.userAgent);
+        uAgnt = userAgent.parse(message.open.userAgent),
+        usIP = message.open.ipAddress;
 
     if(header['SUMR-FLJ'] == 'cl'){
 
@@ -429,6 +430,7 @@ const Open_Init = async function(event){
                     date:datetme.d.date,
                     hour:datetme.d.time,
                     medium:uAgnt.device_type,
+                    ip:usIP,
                     browser:{
                         name:uAgnt.name,
                         version:uAgnt.version,
