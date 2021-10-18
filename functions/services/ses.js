@@ -4,7 +4,7 @@ const   { DBSave, DBSelector, DBClose } = require('../connection'),
         { CustomerDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
-        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked } = require('../mailing'),
+        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked, PushmailLinkDetail } = require('../mailing'),
         userAgent = require('user-agent-parse'),
         AWS = require('aws-sdk'),
         docClient = new AWS.DynamoDB({ apiVersion: '2012-08-10' });
@@ -485,6 +485,7 @@ const Click_Init = async function(event){
             if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
                 var clickTags = message.click.linkTags;
+                var lnk_dt = await PushmailLinkDetail({ ec:snd_dt.ec, url:message.click.link });
         
                 if(clickTags){
                     clickTags.forEach(element => { 
@@ -496,6 +497,7 @@ const Click_Init = async function(event){
                     id:snd_dt.id,
                     bd:cl_dt.sbd,
                     f:{
+                        lnk:lnk_dt.id,
                         snd:snd_dt.id,
                         url:message.click.link,
                         date:datetme.d.date,

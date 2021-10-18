@@ -118,7 +118,7 @@ exports.LeadSendDetail = async function(p=null){
     if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
     let get = await DBGet({
-                        q: `SELECT id_ecsnd, ecsnd_id FROM `+DBSelector('ec_snd',bd)+` WHERE ${fld}=? LIMIT 1`,
+                        q: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec FROM `+DBSelector('ec_snd',bd)+` WHERE ${fld}=? LIMIT 1`,
                         d:[ p.id ]
                     });
 
@@ -127,6 +127,7 @@ exports.LeadSendDetail = async function(p=null){
         if(!isN(get[0])){
             rsp.id = get[0].id_ecsnd;
             rsp.cid = get[0].ecsnd_id;
+            rsp.ec = get[0].ecsnd_ec;
         }
     }else {
         rsp['w'] = 'No ID result';
@@ -269,6 +270,33 @@ exports.LeadSendClicked = async function(p=null){
             if(save.w.errno && save.w.sqlMessage){
 				rsp['w'] = save.w.sqlMessage;
             }
+        }
+
+    }
+
+    return rsp;
+
+};
+
+
+exports.PushmailLinkDetail = async function(p=null){
+
+    let rsp={e:'no'};
+
+    if(!isN(p.ec) && !isN(p.url)){
+
+        let get = await DBGet({
+                            q: `SELECT id_eclnk FROM `+DBSelector('ec_lnk')+` WHERE eclnk_ec=? AND eclnk_lnk_c=? LIMIT 1`,
+                            d:[ p?.ec, p?.url ]
+                        });
+
+        if(get){
+            rsp.e = 'ok';
+            if(!isN(get[0])){
+                rsp.id = get[0].id_eclnk;
+            }
+        }else {
+            rsp['w'] = 'No ID result';
         }
 
     }
