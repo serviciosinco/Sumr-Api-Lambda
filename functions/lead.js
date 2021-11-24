@@ -8,8 +8,8 @@ exports.LeadEmailDetail = async function(params=null){
         response={ success:false },
         database='';
 
-    if(params?.t == 'enc'){ fields = 'cnteml_enc'; }
-    else if(params?.t == 'eml'){ fields = 'cnteml_eml'; }
+    if(params?.type == 'enc'){ fields = 'cnteml_enc'; }
+    else if(params?.type == 'eml'){ fields = 'cnteml_eml'; }
     else{ fields = 'id_cnteml'; }
 
     if(params?.bd){ database=params?.bd; }

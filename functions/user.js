@@ -5,8 +5,8 @@ exports.UserDetail = async function(params=null){
     let fields,
         response={ success:false };
 
-    if(params?.t == 'enc'){ fields = 'us_enc'; }
-    else if(params?.t == 'eml'){ fields = 'us_user'; }
+    if(params?.type == 'enc'){ fields = 'us_enc'; }
+    else if(params?.type == 'eml'){ fields = 'us_user'; }
     else{ fields = 'id_us'; }
 
     let get = await DBGet({
@@ -29,7 +29,8 @@ exports.UserDetail = async function(params=null){
 
 exports.UserUpdate = async function(params=null){
 
-    let response = { success:false };
+    let response = { success:false },
+        database = '';
 
     if(!isN(params?.fields)){
         let upload_fields=[];
@@ -41,7 +42,7 @@ exports.UserUpdate = async function(params=null){
 
     if(!isN(params?.id) && !isN(upload_query)){
 
-        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
+        if(params?.bd){ database=params?.bd; }
 
         let SaveRDS =  await DBSave({
             query:`UPDATE `+DBSelector('us',database)+` SET ${upload_query} WHERE id_us=? LIMIT 1`,

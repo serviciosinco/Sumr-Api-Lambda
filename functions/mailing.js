@@ -80,8 +80,8 @@ exports.CustomerSendDetail  = async function(params=null){
     let fields,
         response={ success:false };
 
-    if(params?.t == 'enc'){ fields = 'clfljsnd_enc'; }
-    else if(params?.t == 'id'){ fields = 'clfljsnd_id'; }
+    if(params?.type == 'enc'){ fields = 'clfljsnd_enc'; }
+    else if(params?.type == 'id'){ fields = 'clfljsnd_id'; }
     else{ fields = 'id_clfljsnd'; }
 
     let get = await DBGet({
@@ -211,14 +211,14 @@ exports.CustomerSendOpened = async function(params=null){
 
 
 
-exports.LeadSendDetail = async function(params=null){
+exports.GetLeadSendDetail = async function(params=null){
 
     let fields,
         response={ success:false },
         database='';
 
-    if(params?.t == 'enc'){ fields = 'ecsnd_enc'; }
-    else if(params?.t == 'id'){ fields = 'ecsnd_id'; }
+    if(params?.type == 'enc'){ fields = 'ecsnd_enc'; }
+    else if(params?.type == 'id'){ fields = 'ecsnd_id'; }
     else{ fields = 'id_ecsnd'; }
 
     if(params?.bd){ database=params?.bd; }
@@ -246,7 +246,8 @@ exports.LeadSendDetail = async function(params=null){
 
 exports.LeadSendUpdate = async function(params=null){
 
-    let response = { success:false };
+    let response = { success:false },
+        database = '';
 
     if(!isN(params?.fields)){
         let upload_fields=[];
@@ -269,7 +270,7 @@ exports.LeadSendUpdate = async function(params=null){
 
     if(!isN(params?.id) && !isN(upload_query)){
 
-        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
+        if(params?.bd){ database=params?.bd; }
 
         let SaveRDS =  await DBSave({
             query:`UPDATE `+DBSelector('ec_snd',database)+` SET ${upload_query} WHERE id_ecsnd=? LIMIT 1`,
@@ -292,11 +293,12 @@ exports.LeadSendUpdate = async function(params=null){
 
 exports.LeadSendOpened = async function(params=null){
 
-    let response = { success:false };
+    let response = { success:false },
+        database = '';
 
     if(params?.bd){
 
-        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
+        if(params?.bd){ database=params?.bd; }
         var openDevice = AwsDeviceId(params?.fields?.medium);
 
         let SaveRDS =  await DBSave({
@@ -333,11 +335,12 @@ exports.LeadSendOpened = async function(params=null){
 
 exports.LeadSendClicked = async function(params=null){
 
-    let response = { success:false };
+    let response = { success:false },
+        database = '';
 
     if(params?.bd){
 
-        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
+        if(params?.bd){ database=params?.bd; }
         var openDevice = AwsDeviceId(params?.fields?.medium);
 
         let SaveRDS =  await DBSave({

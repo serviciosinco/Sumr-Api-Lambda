@@ -1,13 +1,13 @@
 const { DBGet, DBSelector } = require('./connection');
 const { isN } = require('./common');
 
-exports.CustomerDetail = async function(params=null){
+exports.GetAccountDetail = async function(params=null){
 
     let fields='',
         response={ success:false };
 
-    if(params?.t == 'enc'){ fields = 'cl_enc'; }
-    else if(params?.t == 'sbd'){ fields = 'cl_sbd'; }
+    if(params?.type == 'enc'){ fields = 'cl_enc'; }
+    else if(params?.type == 'sbd'){ fields = 'cl_sbd'; }
     else{ fields = 'id_cl'; }
 
     let get = await DBGet({
