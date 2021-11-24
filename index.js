@@ -1,12 +1,12 @@
 const fs = require('fs');
 
 try {
-    if(process.env.NODE_ENV == 'production'){
-        require('dotenv').config({ path: './production.env' });
-    }else if(process.env.NODE_ENV !== 'developer'){
-        require('dotenv').config({ path: './developer.env' });
+    if(fs.existsSync('./.env/.env.prd')){
+        require('dotenv').config({ path: '.env/.env.prd' });
+    }else if(fs.existsSync('./.env/.env.dev')){
+        require('dotenv').config({ path: '.env/.env.dev' });
     }else if(fs.existsSync('./.env/.env')) {
-        require('dotenv').config({ path: '/.env/.env.local' });
+        require('dotenv').config({ path: '.env/.env.local' });
     }
 } catch(err) {
     console.error(err);
