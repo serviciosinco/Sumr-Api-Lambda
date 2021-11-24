@@ -86,6 +86,13 @@ exports.TimeNow = ()=>{
 
 };
 
+
+exports.nToBol = (value)=>{
+	if(value == 1) return true;
+	else return false;
+};
+
+/*
 exports.mySecrets = async(keyname)=>{
 
 	var AWS = require('aws-sdk'),
