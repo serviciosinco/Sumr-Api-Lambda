@@ -9,7 +9,7 @@ try {
         require('dotenv').config({ path: '/.env/.env.local' });
     }
 } catch(err) {
-    console.error(err)
+    console.error(err);
 }
 
 const { isN, Path, TimeNow } = require('./functions/common');

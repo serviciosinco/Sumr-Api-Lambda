@@ -1,5 +1,7 @@
+const mysql = require('promise-mysql');
 const { DBGet, DBSave, DBSelector } = require('./connection');
 const { isN } = require('./common');
+
 exports.LeadEmailDetail = async function(p=null){
 
     let fld,
@@ -11,15 +13,15 @@ exports.LeadEmailDetail = async function(p=null){
 
     if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
-    let get = await DBGet({
+    let result = await DBGet({
                         q: `SELECT id_cnteml FROM `+DBSelector('cnt_eml',bd)+` WHERE ${fld}=? LIMIT 1`,
                         d:[ p.id ]
                     });
 
-    if(get){
+    if(result){
         rsp.e = 'ok';
-        if(!isN(get[0])){
-            rsp.id = get[0].id_cnteml;
+        if(!isN(result[0])){
+            rsp.id = result[0].id_cnteml;
         }
     }else {
         rsp['w'] = 'No ID result';
@@ -46,7 +48,7 @@ exports.LeadEmailUpdate = async function(p=null){
         if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
         let save = await DBSave({
-            q:`UPDATE `+DBSelector('cnt_eml',bd)+` SET ${upd} WHERE id_cnteml=?`,
+            q:`UPDATE `+DBSelector('cnt_eml',bd)+` SET ${upd} WHERE id_cnteml=? LIMIT 1`,
             d:[ p.id ]
         });
 

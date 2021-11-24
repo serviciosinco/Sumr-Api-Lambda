@@ -49,7 +49,7 @@ exports.CustomerSendUpdate = async function(p=null){
     if(!isN(p.id) && !isN(upd)){
 
         let save = await DBSave({
-            q:`UPDATE `+DBSelector('_cl_flj_snd')+` SET ${upd} WHERE id_clfljsnd=?`,
+            q:`UPDATE `+DBSelector('_cl_flj_snd')+` SET ${upd} WHERE id_clfljsnd=? LIMIT 1`,
             d:[ p.id ]
         });
 
@@ -118,7 +118,7 @@ exports.LeadSendDetail = async function(p=null){
     if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
     let get = await DBGet({
-                        q: `SELECT id_ecsnd, ecsnd_id FROM `+DBSelector('ec_snd',bd)+` WHERE ${fld}=? LIMIT 1`,
+                        q: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec FROM `+DBSelector('ec_snd',bd)+` WHERE ${fld}=? LIMIT 1`,
                         d:[ p.id ]
                     });
 
@@ -127,6 +127,7 @@ exports.LeadSendDetail = async function(p=null){
         if(!isN(get[0])){
             rsp.id = get[0].id_ecsnd;
             rsp.cid = get[0].ecsnd_id;
+            rsp.ec = get[0].ecsnd_ec;
         }
     }else {
         rsp['w'] = 'No ID result';
@@ -193,7 +194,7 @@ exports.LeadSendOpened = async function(p=null){
         var open_device = AwsDeviceId(p.f.medium);
 
         let save = await DBSave({
-            q:`INSERT INTO `+DBSelector('ec_op',bd)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p) VALUES (?,?,?,?,?,?,?)`,
+            q:`INSERT INTO `+DBSelector('ec_op',bd)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p, ecop_ip) VALUES (?,?,?,?,?,?,?,?)`,
             d:[ 
                 p.f.snd,
                 p.f.date,
@@ -201,7 +202,8 @@ exports.LeadSendOpened = async function(p=null){
                 open_device,
                 p.f.browser.name,
                 p.f.browser.version,
-                p.f.browser.platform
+                p.f.browser.platform,
+                p.f.ip
             ]
         });
 
@@ -268,6 +270,33 @@ exports.LeadSendClicked = async function(p=null){
             if(save.w.errno && save.w.sqlMessage){
 				rsp['w'] = save.w.sqlMessage;
             }
+        }
+
+    }
+
+    return rsp;
+
+};
+
+
+exports.PushmailLinkDetail = async function(p=null){
+
+    let rsp={e:'no'};
+
+    if(!isN(p.ec) && !isN(p.url)){
+
+        let get = await DBGet({
+                            q: `SELECT id_eclnk FROM `+DBSelector('ec_lnk')+` WHERE eclnk_ec=? AND eclnk_lnk_c=? LIMIT 1`,
+                            d:[ p?.ec, p?.url ]
+                        });
+
+        if(get){
+            rsp.e = 'ok';
+            if(!isN(get[0])){
+                rsp.id = get[0].id_eclnk;
+            }
+        }else {
+            rsp['w'] = 'No ID result';
         }
 
     }

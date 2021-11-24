@@ -11,7 +11,7 @@ exports.ListDetail = async function(p=null){
         whrs='',
         fld='';
 
-    if(!isN(p.key)){ whr.push( mysql.format('sisslctp_key=?', p.key) ); }
+    if(!isN(p.key)){ whr.push( `sisslctp_key='${p.key}'` ); }
     if(!isN(whr)){ whrs = whr.join(' AND '); }
 
     let get = await DBGet({ q: `SELECT * FROM `+DBSelector('VW_lists')+` WHERE ${whrs}` });

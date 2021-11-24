@@ -1,13 +1,41 @@
-const   { DBSave, DBSelector } = require('../connection'),
+const   { DBSave, DBSelector, DBClose } = require('../connection'),
         { isN, getTimefromISO } = require('../common'),
         { ListDetail } = require('../system'),
         { CustomerDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
-        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked } = require('../mailing'),
+        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, LeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked, PushmailLinkDetail } = require('../mailing'),
         userAgent = require('user-agent-parse'),
         AWS = require('aws-sdk'),
-        docClient = new AWS.DynamoDB.DocumentClient();
+        docClient = new AWS.DynamoDB({ apiVersion: '2012-08-10' });
+
+
+const SaveRequest = async function(event){
+    
+    try {
+
+        if(!isN(event)){
+
+            var date = new Date();
+
+            return await docClient.put({
+                        TableName: (process.env.NODE_ENV == 'production' ? 'prd-':'dev-') + 'rqu',
+                        Item:{
+                            id: date.getTime().toString(),
+                            rq: JSON.stringify( event ),
+                            date_in: date.toISOString()
+                        }
+                    }).promise();
+
+        }
+
+    } catch (err) {
+        
+        return false;
+
+    }
+
+}
 
 const Headers = (h=null)=>{
 
@@ -68,7 +96,7 @@ const BounceGetId = async function(p=null){
 
         var attr = detail.ls[key];
 
-        if(attr.key.vl == p.key){
+        if(attr?.key?.vl == p.key){
 
             if(!isN(p.prnt)){
                 prnt = attr[p.prnt].vl;
@@ -118,41 +146,46 @@ const Delivery_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
-            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
 
-        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
-            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
-                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
-            }
-        }
+        if(cl_dt?.sbd){
 
-        if(!isN(snd_dt.id) && !isN(cl_dt.id)){
+            var snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
 
-            let upd = await LeadSendUpdate({
-                id:snd_dt.id,
-                bd:cl_dt.sbd,
-                f:{
-                    est:process.env.ID_SNDEST_ACPT,
-                    dlvry_tmmls: message.delivery.processingTimeMillis,
-                    dlvry_tmstmp: message.delivery.timestamp,
-                    dlvry_smtrsp: message.delivery.smtpResponse,
-                    dlvry_rmtmta: message.delivery.reportingMTA,
-                    dlvry_rmtmta_ip: message.delivery.remoteMtaIp
+            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+                var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                    await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
                 }
-            });
-
-            if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                data['e'] = 'ok';
-            }else{
-                data['w'] = !isN(upd.w)?upd.w:'';
             }
 
-        }else{
+            if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
-            if(isN(snd_dt.id)){ data['w'] += 'snd_dt.id empty'; }
-            if(isN(cl_dt.id)){ data['w'] += 'cl_dt.id empty'; }
+                let upd = await LeadSendUpdate({
+                    id:snd_dt.id,
+                    bd:cl_dt.sbd,
+                    f:{
+                        est:process.env.ID_SNDEST_ACPT,
+                        dlvry_tmmls: message.delivery.processingTimeMillis,
+                        dlvry_tmstmp: message.delivery.timestamp,
+                        dlvry_smtrsp: message.delivery.smtpResponse,
+                        dlvry_rmtmta: message.delivery.reportingMTA,
+                        dlvry_rmtmta_ip: message.delivery.remoteMtaIp
+                    }
+                });
+
+                if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
+                    data['e'] = 'ok';
+                }else{
+                    data['w'] = !isN(upd.w)?upd.w:'';
+                }
+
+            }else{
+
+                if(isN(snd_dt.id)){ data['w'] += 'snd_dt.id empty'; }
+                if(isN(cl_dt.id)){ data['w'] += 'cl_dt.id empty'; }
+
+            }
 
         }
 
@@ -163,6 +196,8 @@ const Delivery_Init = async function(event){
 };
 
 const Complaint_Init = async function(event){
+    
+    await SaveRequest( event );
 
     var data={e:'no'},
         message = JSON.parse(event.Records[0].Sns.Message),
@@ -198,39 +233,50 @@ const Complaint_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
-            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
 
-        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
-            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
-                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+        if(cl_dt?.sbd){
+
+            var snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+
+            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+                var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                    await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
+                }
             }
-        }
 
-        if(!isN(snd_dt.id) && !isN(cl_dt.id)){
-            
-            Object.keys(message.complaint.complainedRecipients).forEach(async function(key){
+            if(!isN(snd_dt.id) && !isN(cl_dt.id)){
 
-                var eml = message.complaint.complainedRecipients[key].emailAddress;
-                var eml_dt = await LeadEmailDetail({ id:eml, t:'eml' });
+                for await (let lead of message.complaint.complainedRecipients) {
 
-                var upd = await LeadEmailUpdate({
-                    id:eml_dt.id,
-                    f:{
-                        rjct: 1,
-                        sndi: 2,
-                        dnc: message.complaint.complaintFeedbackType,
-                        cld: process.env.ID_CLD_BAD
+                    var eml = lead?.emailAddress;
+
+                    if(!isN(eml)){
+                        
+                        var eml_dt = await LeadEmailDetail({ id:eml, bd:cl_dt.sbd, t:'eml' });
+
+                        var upd = await LeadEmailUpdate({
+                            id:eml_dt.id,
+                            bd:cl_dt.sbd,
+                            f:{
+                                rjct: 1,
+                                sndi: 2,
+                                dnc: message.complaint.complaintFeedbackType,
+                                cld: process.env.ID_CLD_BAD
+                            }
+                        });
+
+                        if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
+                            data['e'] = 'ok';
+                        }
+
                     }
-                });
 
-                if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                    data['e'] = 'ok';
                 }
 
-            });
-
+            }
+        
         }
 
     }
@@ -276,34 +322,39 @@ const Bounce_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
-            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
 
-        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
-            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
-                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
-            }
-        }
+        if(cl_dt?.sbd){
 
-        if(!isN(snd_dt.id) && !isN(cl_dt.id)){
+            var snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
 
-            let upd = await LeadSendUpdate({
-                id:snd_dt.id,
-                bd:cl_dt.sbd,
-                f:{
-                    est:process.env.ID_SNDEST_RBT,
-                    bnc: JSON.stringify(message.bounce),
-                    bnc_sbj: event.Records[0].Sns.Subject,
-                    bnc_msg: message.bounce.bouncedRecipients[0].diagnosticCode,
-                    bnc_rpr: message.bounce.reportingMTA,
-                    bnc_tp: tp_id.id,
-                    bnc_tp_sub: tps_id.id
+            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+                var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                    await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
                 }
-            });
+            }
 
-            if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                data['e'] = 'ok';
+            if(!isN(snd_dt.id) && !isN(cl_dt.id)){
+
+                let upd = await LeadSendUpdate({
+                    id:snd_dt.id,
+                    bd:cl_dt.sbd,
+                    f:{
+                        est:process.env.ID_SNDEST_RBT,
+                        bnc: JSON.stringify(message.bounce),
+                        bnc_sbj: event.Records[0].Sns.Subject,
+                        bnc_msg: message.bounce.bouncedRecipients[0].diagnosticCode,
+                        bnc_rpr: message.bounce.reportingMTA,
+                        bnc_tp: tp_id.id,
+                        bnc_tp_sub: tps_id.id
+                    }
+                });
+
+                if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
+                    data['e'] = 'ok';
+                }
+
             }
 
         }
@@ -321,7 +372,8 @@ const Open_Init = async function(event){
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId,
-        uAgnt = userAgent.parse(message.open.userAgent);
+        uAgnt = userAgent.parse(message.open.userAgent),
+        usIP = message.open.ipAddress;
 
     if(header['SUMR-FLJ'] == 'cl'){
 
@@ -378,6 +430,7 @@ const Open_Init = async function(event){
                     date:datetme.d.date,
                     hour:datetme.d.time,
                     medium:uAgnt.device_type,
+                    ip:usIP,
                     browser:{
                         name:uAgnt.name,
                         version:uAgnt.version,
@@ -414,50 +467,57 @@ const Click_Init = async function(event){
 
     }else if(header['SUMR-FLJ'] == 'ec'){
 
-        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] }),
-            snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
-            datetme = getTimefromISO(message.click.timestamp),
-            ttobd = '';
+        var cl_dt = await CustomerDetail({ t:'enc', id:header['SUMR-CL'] });
 
-        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
-            var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
-                await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
-            }
-        }
+        if(cl_dt?.sbd){
+                
+            var snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
+                datetme = getTimefromISO(message.click.timestamp),
+                ttobd = '';
 
-        if(!isN(snd_dt.id) && !isN(cl_dt.id)){
-
-            var clickTags = message.click.linkTags;
-    
-            if(clickTags){
-                clickTags.forEach(element => { 
-                    ttobd = ttobd + JSON.stringify( element );
-                });
-            }
-
-            let insert = await LeadSendClicked({
-                id:snd_dt.id,
-                bd:cl_dt.sbd,
-                f:{
-                    snd:snd_dt.id,
-                    url:message.click.link,
-                    date:datetme.d.date,
-                    hour:datetme.d.time,
-                    medium:uAgnt.device_type,
-                    browser:{
-                        name:uAgnt.name,
-                        version:uAgnt.version,
-                        platform:uAgnt.os
-                    }
+            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+                var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                    await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
                 }
-            });
+            }
 
-            if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
-                data['e'] = 'ok';
-                data['id'] = insert.id;
-            }else{
-                data['w'] = insert.w;
+            if(!isN(snd_dt.id) && !isN(cl_dt.id)){
+
+                var clickTags = message.click.linkTags;
+                var lnk_dt = await PushmailLinkDetail({ ec:snd_dt.ec, url:message.click.link });
+        
+                if(clickTags){
+                    clickTags.forEach(element => { 
+                        ttobd = ttobd + JSON.stringify( element );
+                    });
+                }
+
+                let insert = await LeadSendClicked({
+                    id:snd_dt.id,
+                    bd:cl_dt.sbd,
+                    f:{
+                        lnk:lnk_dt.id,
+                        snd:snd_dt.id,
+                        url:message.click.link,
+                        date:datetme.d.date,
+                        hour:datetme.d.time,
+                        medium:uAgnt.device_type,
+                        browser:{
+                            name:uAgnt.name,
+                            version:uAgnt.version,
+                            platform:uAgnt.os
+                        }
+                    }
+                });
+
+                if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
+                    data['e'] = 'ok';
+                    data['id'] = insert.id;
+                }else{
+                    data['w'] = insert.w;
+                }
+
             }
 
         }
@@ -472,20 +532,9 @@ const Click_Init = async function(event){
 const Oth_Init = async function(event){
 
     var data={e:'no'};
-    var date = new Date();
-
-    var params = {
-        TableName:process.env.NODE_ENV=='production'?'prd-':'dev-' + 'rqu',
-        Item:{
-            id: date.getTime().toString(),
-            rq: JSON.stringify( event ),
-            date_in: date.toISOString()
-        }
-    };
-    
 
     try {
-        await docClient.put(params).promise();
+        await SaveRequest( event );
         data['e'] = 'ok';
     } catch (err) {
         data['w'] = err;
@@ -497,9 +546,9 @@ const Oth_Init = async function(event){
 
 exports.Service_SES = async function(event){
 
-    let result = '';
-    let message = JSON.parse(event.Records[0].Sns.Message);
-    let type = message.eventType ? message.eventType : message.notificationType;
+    let result = '',
+        message = JSON.parse(event.Records[0].Sns.Message),
+        type = message.eventType ? message.eventType : message.notificationType;
 
     if(type == 'Delivery'){
 
@@ -527,7 +576,8 @@ exports.Service_SES = async function(event){
 
     }
 
-    result = await Oth_Init(event);
+    //await DBClose();
+    //result = await Oth_Init(event);
 
     return result;
 

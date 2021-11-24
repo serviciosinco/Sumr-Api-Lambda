@@ -44,7 +44,7 @@ exports.UserUpdate = async function(p=null){
         if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
 
         let save = await DBSave({
-            q:`UPDATE `+DBSelector('us',bd)+` SET ${upd} WHERE id_us=?`,
+            q:`UPDATE `+DBSelector('us',bd)+` SET ${upd} WHERE id_us=? LIMIT 1`,
             d:[ p.id ]
         });
 
