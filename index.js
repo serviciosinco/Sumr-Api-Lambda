@@ -17,7 +17,7 @@ const { Service_SES } = require('./functions/services/ses');
 
 exports.handler = async (event, context, callback) => {
 
-    let data = { e:'no' };
+    let response = { success:false };
 
     try {
 
@@ -31,18 +31,18 @@ exports.handler = async (event, context, callback) => {
             if(!isN(pm1) && pm1 == 'v2'){
 
                 if(!isN(pm2) && pm2 == 'time'){
-                    data = TimeNow();
+                    response = TimeNow();
                 }
 
             }else if( !isN(event.Records) && !isN(event.Records[0].Sns) ){ // SNS Handler
 
-                data = await Service_SES(event);
+                response = await Service_SES(event);
 
             }
 
             if(!isN(get) && !isN(get.callback)){
 
-                let dataj = JSON.stringify(data);
+                let dataj = JSON.stringify(response);
 
                 return {
                     statusCode: 200,
@@ -53,7 +53,7 @@ exports.handler = async (event, context, callback) => {
 
                 return {
                     statusCode: 200,
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(response)
                 }
 
             }
@@ -66,7 +66,7 @@ exports.handler = async (event, context, callback) => {
 
         return{
             statusCode: 400,
-            body: JSON.stringify(data)
+            body: JSON.stringify(response)
         }
 
     }
