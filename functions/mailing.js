@@ -165,7 +165,7 @@ exports.CustomerSendOpened = async function(params=null){
 
             response.id = insertRDS.insertId;
 
-            let CampaignSend = await LeadSend_FindCampaign({ id:p?.f?.snd, type:'snd' }),
+            let CampaignSend = await LeadSend_FindCampaign({ id:params?.fields?.snd, type:'snd' }),
                 CampaignDetail = CampaignSend?.id ? await GetCampaignDetail({ id:CampaignSend?.id }) : null ;
 
             if(CampaignDetail?.id && !CampaignDetail?.total?.update){
@@ -396,7 +396,7 @@ exports.PushmailLinkDetail = async function(params=null){
 
         let get = await DBGet({
                             query: `SELECT id_eclnk FROM `+DBSelector('ec_lnk')+` WHERE eclnk_ec=? AND eclnk_lnk_c=? LIMIT 1`,
-                            data:[ p?.ec, p?.url ]
+                            data:[ params?.ec, params?.url ]
                         });
 
         if(get){
