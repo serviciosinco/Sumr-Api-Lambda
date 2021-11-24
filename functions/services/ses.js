@@ -199,7 +199,7 @@ const Complaint_Init = async function(event){
     
     await SaveRequest( event );
 
-    var data={ success:false },
+    var response = { success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId;
@@ -280,14 +280,14 @@ const Complaint_Init = async function(event){
 
     }
 
-    return data;
+    return response;
 
 };
 
 
 const Bounce_Init = async function(event){
 
-    var data={ success:false },
+    var response = { success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId,
@@ -360,7 +360,7 @@ const Bounce_Init = async function(event){
 
     }
 
-    return data;
+    return response;
 
 };
 
@@ -397,12 +397,10 @@ const Open_Init = async function(event){
 
             if(insert?.success){
                 response.success = true;
-                data['id'] = insert.id;
+                response.id = insert.id;
             }else{
                 response.error = insert.w;
             }
-
-
 
         }
 
@@ -512,7 +510,7 @@ const Click_Init = async function(event){
 
                 if(insert?.success){
                     response.success = true;
-                    data['id'] = insert.id;
+                    response.id = insert.id;
                 }else{
                     response.error = insert.w;
                 }
@@ -530,7 +528,7 @@ const Click_Init = async function(event){
 
 const Oth_Init = async function(event){
 
-    var data={ success:false };
+    var response = { success:false };
 
     try {
         await SaveRequest( event );
@@ -539,7 +537,7 @@ const Oth_Init = async function(event){
         response.error = err;
     }
 
-    return data;
+    return response;
 
 };
 

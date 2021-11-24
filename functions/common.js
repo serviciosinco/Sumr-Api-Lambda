@@ -86,48 +86,7 @@ exports.TimeNow = ()=>{
 
 };
 
-
 exports.nToBol = (value)=>{
 	if(value == 1) return true;
 	else return false;
 };
-
-/*
-exports.mySecrets = async(keyname)=>{
-
-	var AWS = require('aws-sdk'),
-		region = "us-east-1",
-		secretName = keyname;
-
-	var client = new AWS.SecretsManager({
-		region: region
-	});
-
-	try {
-
-		const data = await client.getSecretValue({ SecretId: secretName }).promise();
-
-		if (data) {
-
-			if (data.SecretString) {
-				const secret = data.SecretString;
-				const parsedSecret = JSON.parse(secret);
-				return parsedSecret;
-			}
-
-			const binarySecretData = data.SecretBinary;
-			return binarySecretData;
-
-		}
-
-	} catch (error) {
-
-	  return {
-		data: null,
-		error: error
-	  };
-
-	}
-
-};
-*/
