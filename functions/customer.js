@@ -1,31 +1,31 @@
 const { DBGet, DBSelector } = require('./connection');
 const { isN } = require('./common');
 
-exports.CustomerDetail = async function(p=null){
+exports.CustomerDetail = async function(params=null){
 
-    let fld='',
-        rsp={e:'no'};
+    let fields='',
+        response={ success:false };
 
-    if(p.t == 'enc'){ fld = 'cl_enc'; }
-    else if(p.t == 'sbd'){ fld = 'cl_sbd'; }
-    else{ fld = 'id_cl'; }
+    if(params?.t == 'enc'){ fields = 'cl_enc'; }
+    else if(params?.t == 'sbd'){ fields = 'cl_sbd'; }
+    else{ fields = 'id_cl'; }
 
     let get = await DBGet({
-                        q: `SELECT id_cl, cl_enc, cl_sbd FROM `+DBSelector('_cl')+` WHERE ${fld}=? LIMIT 1`,
-                        d:[ p.id ]
-                    });
+                    query: `SELECT id_cl, cl_enc, cl_sbd FROM `+DBSelector('_cl')+` WHERE ${fields}=? LIMIT 1`,
+                    data:[ params?.id ]
+                });
 
     if(get){
-        rsp.e = 'ok';
+        response.success = true;
         if(!isN(get[0])){
-            rsp.id = get[0].id_cl;
-            rsp.enc = get[0].cl_enc;
-            rsp.sbd = 'sumr_c_'+get[0].cl_sbd;
+            response.id = get[0].id_cl;
+            response.enc = get[0].cl_enc;
+            response.sbd = 'sumr_c_'+get[0].cl_sbd;
         }
     }else {
-        rsp['w'] = 'No ID result';
+        response.error = 'No ID result';
     }
 
-    return rsp;
+    return response;
 
 };

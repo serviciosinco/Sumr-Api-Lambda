@@ -62,7 +62,7 @@ exports.handler = async (event, context, callback) => {
 
     }catch(err){
 
-        data['w'] = err.message;
+        response.error = err.message;
 
         return{
             statusCode: 400,

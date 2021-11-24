@@ -4,33 +4,43 @@ const { isN /*, mySecrets */} = require('./common');
 
 var CnxBusRd, CnxBusWrt;
 
-const Connect = async(p=null)=>{
+const Connect = async(param=null)=>{
 
-	var port;
-	port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
+	var response = {},
+		port = process.env.RDS_PORT ? process.env.RDS_PORT : 3306;
 
-	if(	
-		isN(CnxBusRd) || 
-		isN(CnxBusWrt)
-	){
+	if(	!CnxBusRd || !CnxBusWrt ){
 
 		try{
 
-			CnxBusRd = await mysql.createPool({
-				database: 'sumr_bd',
-				host: process.env.RDS_HOST_RD,
-				user: process.env.RDS_USERNAME_RD,
-				password: process.env.RDS_PASSWORD_RD,
-				port: port
-			});
+			if(param?.read){
 
-			CnxBusWrt = await mysql.createPool({
-				database: 'sumr_bd',
-				host: process.env.RDS_HOST,
-				user: process.env.RDS_USERNAME,
-				password: process.env.RDS_PASSWORD,
-				port: port
-			});
+				CnxBusRd = await mysql.createPool({
+					database: 'sumr_bd',
+					host: process.env.RDS_PRVT_HOST_RD ? process.env.RDS_PRVT_HOST_RD : process.env.RDS_HOST_RD,
+					user: process.env.RDS_USERNAME_RD,
+					password: process.env.RDS_PASSWORD_RD,
+					port: port,
+					connectionLimit: 10
+				});
+
+				if(CnxBusRd){ response.read = true; }
+
+			}
+
+			if(param?.write){
+
+				CnxBusWrt = await mysql.createPool({
+					database: 'sumr_bd',
+					host: process.env.RDS_PRVT_HOST ? process.env.RDS_PRVT_HOST : process.env.RDS_HOST,
+					user: process.env.RDS_USERNAME,
+					password: process.env.RDS_PASSWORD,
+					port: port,
+					connectionLimit: 10
+				});
+
+				if(CnxBusRd){ response.write = true; }
+			}
 
 			return true;
 
@@ -46,114 +56,157 @@ const Connect = async(p=null)=>{
 
 	}
 
+	return response;
+
 };
 
-exports.DBSelector = (v=null, d=null)=>{
+exports.DBAccount = (account=null)=>{
+	let response = null;
+	if(account) response = 'sumr_c_'+account;
+	return response;
+};
 
-	let r=null,
-		db=process.env.DBM;
+exports.DBSelector = (table=null, options=null)=>{
 
-	if(!isN(d)){
-		if(d=='d'){ db=process.env.DBD; }
-		else if(d=='c'){ db=process.env.DBC; }
-		else if(d=='t'){ db=process.env.DBT; }
-		else if(d=='p'){ db=process.env.DBP; }
-		else{ db=d; }
+	let response = null,
+		database = process.env.DBM;
+
+	if(options?.db){
+		if(options.db=='d'){ database=process.env.DBD; }
+		else if(options.db=='c'){ database=process.env.DBC; }
+		else if(options.db=='t'){ database=process.env.DBT; }
+		else if(options.db=='p'){ database=process.env.DBP; }
+		else{ database=options.db; }
+	}else if(options?.account){
+		database = this.DBAccount(options?.account);
 	}
 
-	if(!isN(v)){
-		if(v.indexOf('.') !== -1){ r=v; }else{ r=db+'.'+v; }
+	if(table && database){
+		if(table.indexOf('.') !== -1){ response=table; }else{ response=database+'.'+table; }
 	}else{
-		r='';
+		response='';
 	}
 
-	return r;
-},
+	return response;
+};
 
 exports.DBClose = async function(p){
-	if(!isN(CnxBusRd)){ await CnxBusRd.end(); }
-	if(!isN(CnxBusWrt)){ await CnxBusWrt.end(); }
-},
+	if(!CnxBusRd){ await CnxBusRd.end(); }
+	if(!CnxBusWrt){ await CnxBusWrt.end(); }
+};
 
-exports.DBGet = async function(p=null){
+exports.DBGet = async function(param=null){
 
-	if( !isN(p) && !isN(p.q) ){
+	var data_format = [],
+		response = {},
+		query = '',
+		conexDB,
+		conexPool;
 
-		let svle = [];
-		let rsp = {};
-		var cnx;
+	if( param?.query ){
 
-		if(isN(CnxBusRd)){
-			await Connect();
+		if(!CnxBusRd){
+			conexDB = await Connect({ read:true });
 		}
 
-		if(!isN(p.d)){ svle = p.d; }
+		if(param?.data){ data_format = param?.data; }
 
-		if(!isN(CnxBusRd)){
+		if(CnxBusRd){
+
 			try {
-				cnx = await CnxBusRd.getConnection();
+
+				conexPool = await CnxBusRd.getConnection();
 				
-				if(!isN(p.d)){
-					svle = p.d; 
-					var qry = mysql.format(p.q, svle);
+				if(param?.data){
+					data_format = param?.data; 
+					query = mysql.format(param?.query, data_format);
 				}else{
-					var qry = p.q;
+					query = param?.query;
 				}
 
-				let prc = await cnx.query(qry);
-				if(prc){ rsp = prc; }
+				const result = await conexPool.query(query);
+				if(result){ response = result; }
+
 			}catch(ex){
-				rsp.w = ex;
+				response.error = ex;
 			}finally{
-				if(!isN(cnx)){ await cnx.release(); }
+				if(conexPool){ 
+					//console.log('Release connection to:' + ( process.env.RDS_PRVT_HOST_RD ? process.env.RDS_PRVT_HOST_RD : process.env.RDS_HOST ) ); 
+					await conexPool.release(); 
+				}
 			}
+
+		}else{
+
+			response.error = `No read connection`;
+
 		}
 
-		return rsp;
+	}else{
+
+		response.error = `No query for execute`;
 
 	}
 
+	return response;
+
 };
 
-exports.DBSave = async function(p=null){
+exports.DBSave = async function(param=null){
 
-	if( !isN(p) && !isN(p.q) ){
+	var data_format = [],
+		response = {},
+		query = '',
+		conexDB,
+		conexPool;
 
-		let svle = [];
-		let rsp = {e:'no'};
-		var cnx;
+	if( param?.query ){
 
-		if(isN(CnxBusWrt)){
-			await Connect();
+		if(!CnxBusWrt){
+			console.log('No Pool Connection, So Create One');
+			conexDB = await Connect({ write:true });
 		}
 
-		if(!isN(CnxBusWrt)){
+		if(CnxBusWrt){
 
 			try {
 
-				cnx = await CnxBusWrt.getConnection();
+				conexPool = await CnxBusWrt.getConnection();
 
-				if(!isN(p.d)){
-					svle = p.d; 
-					var qry = mysql.format(p.q, svle);
+				if(param?.data){
+					data_format = param?.data; 
+					query = mysql.format(param?.query, data_format);
 				}else{
-					var qry = p.q;
+					query = param?.query;
 				}
 
-				let prc = await cnx.query(qry);
-				if(prc){ rsp = prc; }
+				const result = await conexPool.query(query);
+				if(result){ response = result; }
 
 			}catch(ex){
-				await cnx.query("ROLLBACK");
-				rsp.w = ex;
+				await conexPool.query("ROLLBACK");
+				response.error = ex;
 			}finally{
-				if(!isN(cnx)){ await cnx.release(); }
+				if(conexPool){ await conexPool.release(); }
 			}
 
-		}
+		}else{
+		
+			response.error = `No CnxBusWrt connection`;
+			
+		}	
 
-		return rsp;
-
+	}else{
+		
+		response.error = `No query string`;
+		
 	}
 
+	return response;
+
 };
+
+
+exports.DBSleep = (time=2000)=>{
+	return new Promise((resolve) => setTimeout(resolve, time));
+}

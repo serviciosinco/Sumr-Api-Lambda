@@ -2,64 +2,67 @@ const mysql = require('promise-mysql');
 const { DBGet, DBSave, DBSelector } = require('./connection');
 const { isN } = require('./common');
 
-exports.LeadEmailDetail = async function(p=null){
+exports.LeadEmailDetail = async function(params=null){
 
-    let fld,
-        rsp={e:'no'};
+    let fields,
+        response={ success:false },
+        database='';
 
-    if(p.t == 'enc'){ fld = 'cnteml_enc'; }
-    else if(p.t == 'eml'){ fld = 'cnteml_eml'; }
-    else{ fld = 'id_cnteml'; }
+    if(params?.t == 'enc'){ fields = 'cnteml_enc'; }
+    else if(params?.t == 'eml'){ fields = 'cnteml_eml'; }
+    else{ fields = 'id_cnteml'; }
 
-    if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
+    if(params?.bd){ database=params?.bd; }
 
     let result = await DBGet({
-                        q: `SELECT id_cnteml FROM `+DBSelector('cnt_eml',bd)+` WHERE ${fld}=? LIMIT 1`,
-                        d:[ p.id ]
+                        query: `SELECT id_cnteml FROM `+DBSelector('cnt_eml',database)+` WHERE ${fields}=? LIMIT 1`,
+                        data:[ params?.id ]
                     });
 
     if(result){
-        rsp.e = 'ok';
+        response.success = true;
         if(!isN(result[0])){
-            rsp.id = result[0].id_cnteml;
+            response.id = result[0].id_cnteml;
         }
     }else {
-        rsp['w'] = 'No ID result';
+        response.error = 'No ID result';
     }
 
-    return rsp;
+    return response;
 
 };
 
-exports.LeadEmailUpdate = async function(p=null){
+exports.LeadEmailUpdate = async function(params=null){
 
-    let rsp={e:'no'};
+    let response = { success:false },
+        upload_fields=[],
+        database='',
+        upload_query='';
 
-    if(!isN(p.f)){
-        let upf=[];
-        if(!isN(p.f.rjct)){ upf.push( mysql.format('cnteml_rjct=?', p.f.rjct) ); }
-        if(!isN(p.f.dnc)){ upf.push( mysql.format('cnteml_dnc=?', p.f.dnc) ); }
-        if(!isN(p.f.cld)){ upf.push( mysql.format('cnteml_cld=?', p.f.cld) ); }
-        var upd = upf.join(',');
+    if(!isN(params?.fields)){
+        if(!isN(params?.fields?.rjct)){ upload_fields.push( mysql.format('cnteml_rjct=?', params?.fields?.rjct) ); }
+        if(!isN(params?.fields?.dnc)){ upload_fields.push( mysql.format('cnteml_dnc=?', params?.fields?.dnc) ); }
+        if(!isN(params?.fields?.cld)){ upload_fields.push( mysql.format('cnteml_cld=?', params?.fields?.cld) ); }
+        upload_query = upload_fields.join(',');
     }
 
-    if(!isN(p.id) && !isN(upd)){
+    if(!isN(params?.id) && !isN(upload_query)){
 
-        if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
+        if(params?.bd){ database=params?.bd; }
 
-        let save = await DBSave({
-            q:`UPDATE `+DBSelector('cnt_eml',bd)+` SET ${upd} WHERE id_cnteml=? LIMIT 1`,
-            d:[ p.id ]
+        let SaveRDS =  await DBSave({
+            query:`UPDATE `+DBSelector('cnt_eml',database)+` SET ${upload_query} WHERE id_cnteml=? LIMIT 1`,
+            data:[ params?.id ]
         });
 
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
-            rsp.e = 'ok';
+        if(SaveRDS?.affectedRows > 0){
+            response.success = true;
         }else {
-            rsp['w'] = 'No ID result';
+            response.error = 'No ID result';
         }
 
     }
 
-    return rsp;
+    return response;
 
 };

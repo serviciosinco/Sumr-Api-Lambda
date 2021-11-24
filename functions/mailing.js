@@ -2,305 +2,411 @@ const mysql = require('promise-mysql');
 const { DBGet, DBSave, DBSelector } = require('./connection');
 const { isN, AwsDeviceId } = require('./common');
 
-exports.CustomerSendDetail  = async function(p=null){
 
-    let fld,
-        rsp={e:'no'};
+const GetCampaignDetail = async( params )=>{
 
-    if(p.t == 'enc'){ fld = 'clfljsnd_enc'; }
-    else if(p.t == 'id'){ fld = 'clfljsnd_id'; }
-    else{ fld = 'id_clfljsnd'; }
+    var response = {};
 
-    let get = await DBGet({
-                        q: `SELECT id_clfljsnd FROM `+DBSelector('_cl_flj_snd')+` INNER JOIN _cl_flj ON clfljsnd_clflj = id_clflj WHERE ${fld}=? LIMIT 1`,
-                        d:[ p.id ]
-                    });
+    if(params?.id){
+        
+        let tableSource = `${process?.env?.DYNAMO_PRFX}-ec-cmpg`;
 
-    if(get){
-        rsp.e = 'ok';
-        if(!isN(get[0])){
-            rsp.id = get[0].id_clfljsnd;
-        }
-    }else {
-        rsp['w'] = 'No ID result';
-    }
+        var row = await DYNAMO.query({
+                    TableName : tableSource,
+                    KeyConditionExpression: "#id=:idv",
+                    ExpressionAttributeNames:{ "#id": "id" },
+                    ExpressionAttributeValues: { ":idv": params?.id },
+                    Limit: 1
+                }).promise();
+        
+        if(!row?.Items[0]){
+            
+            var row = await DYNAMO.scan({
+                    TableName: tableSource,
+                    ProjectionExpression: 'id_eccmpg, eccmpg_tot_upd',
+                    FilterExpression: '#id=:idv',
+                    ExpressionAttributeValues: {
+                        ':idv': params?.id,
+                    }
+                }).promise();
+            
+            response.id = row?.Items[0]?.id_eccmpg;
+            response.total = {
+                update : nToBol( row?.Items[0]?.eccmpg_tot_upd )
+            };
 
-    return rsp;
-
-};
-
-exports.CustomerSendUpdate = async function(p=null){
-
-    let rsp={e:'no'};
-
-    if(!isN(p.f)){
-        let upf=[];
-        if(!isN(p.f.est)){ upf.push( mysql.format('clfljsnd_est=?', p.f.est) ); }
-        if(!isN(p.f.bnc)){ upf.push( mysql.format('clfljsnd_bnc=?', p.f.bnc) ); }
-        if(!isN(p.f.bnc_sbj)){ upf.push( mysql.format('clfljsnd_bnc=?', p.f.bnc_sbj) ); }
-        if(!isN(p.f.bnc_msg)){ upf.push( mysql.format('clfljsnd_bnc_msg=?', p.f.bnc_msg) ); }
-        if(!isN(p.f.bnc_tp)){ upf.push( mysql.format('clfljsnd_bnc_tp=?', p.f.bnc_tp) ); }
-        if(!isN(p.f.bnc_tp_sub)){ upf.push( mysql.format('clfljsnd_bnc_tp_sub=?', p.f.bnc_tp_sub) ); }
-        if(!isN(p.f.bnc_rpr)){ upf.push( mysql.format('clfljsnd_bnc_rpr=?', p.f.bnc_rpr) ); }
-        if(!isN(p.f.bnc_rule)){ upf.push( mysql.format('clfljsnd_bnc_rule=?', p.f.bnc_rule) ); }
-        var upd = upf.join(',');
-    }
-
-    if(!isN(p.id) && !isN(upd)){
-
-        let save = await DBSave({
-            q:`UPDATE `+DBSelector('_cl_flj_snd')+` SET ${upd} WHERE id_clfljsnd=? LIMIT 1`,
-            d:[ p.id ]
-        });
-
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
-            rsp.e = 'ok';
-        }else {
-            rsp['w'] = 'No ID result';
         }
 
     }
 
-    return rsp;
+    return response;
 
-};
+}
 
 
+const LeadSend_FindCampaign = async function( params=null ){
 
-exports.CustomerSendOpened = async function(p=null){
+    let field,
+        response={ status:false };
 
-    let rsp={e:'no'};
+    if(params?.id){
 
-    if(!isN(p.bd)){
-
-        var open_device = AwsDeviceId(p.f.medium);
-
-        let save = await DBSave({
-            q:`INSERT INTO `+DBSelector('_cl_flj_snd_op')+`(clfljsndop_snd, eclfljsndop_f, clfljsndop_h, clfljsndop_m, clfljsndop_brw_t, clfljsndop_brw_v, clfljsndop_brw_p) VALUES (?,?,?,?,?,?,?)`,
-            d:[ 
-                p.f.snd,
-                p.f.date,
-                p.f.hour,
-                open_device,
-                p.f.browser.name,
-                p.f.browser.version,
-                p.f.browser.platform
-            ]
-        });
-
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0 && save.insertId){
-            rsp.e = 'ok';
-            rsp.id = save.insertId;
-        }else {
-            if(save.w.errno && save.w.sqlMessage){
-				rsp['w'] = save.w.sqlMessage;
-            }
-        }
-
-    }
-
-    return rsp;
-
-};
-
-
-
-
-exports.LeadSendDetail = async function(p=null){
-
-    let fld,
-        rsp={e:'no'};
-
-    if(p.t == 'enc'){ fld = 'ecsnd_enc'; }
-    else if(p.t == 'id'){ fld = 'ecsnd_id'; }
-    else{ fld = 'id_ecsnd'; }
-
-    if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
-
-    let get = await DBGet({
-                        q: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec FROM `+DBSelector('ec_snd',bd)+` WHERE ${fld}=? LIMIT 1`,
-                        d:[ p.id ]
-                    });
-
-    if(get){
-        rsp.e = 'ok';
-        if(!isN(get[0])){
-            rsp.id = get[0].id_ecsnd;
-            rsp.cid = get[0].ecsnd_id;
-            rsp.ec = get[0].ecsnd_ec;
-        }
-    }else {
-        rsp['w'] = 'No ID result';
-    }
-
-    return rsp;
-
-};
-
-
-exports.LeadSendUpdate = async function(p=null){
-
-    let rsp={e:'no'};
-
-    if(!isN(p.f)){
-        let upf=[];
-        if(!isN(p.f.cid)){ upf.push( mysql.format('ecsnd_id=?', p.f.cid) ); }
-        if(!isN(p.f.est)){ upf.push( mysql.format('ecsnd_est=?', p.f.est) ); }
-        if(!isN(p.f.dlvry_tmmls)){ upf.push( mysql.format('ecsnd_dlvry_tmmls=?', p.f.dlvry_tmmls) ); }
-        if(!isN(p.f.dlvry_tmstmp)){ upf.push( mysql.format('ecsnd_dlvry_tmstmp=?', p.f.dlvry_tmstmp) ); }
-        if(!isN(p.f.dlvry_smtrsp)){ upf.push( mysql.format('ecsnd_dlvry_smtrsp=?', p.f.dlvry_smtrsp) ); }
-        if(!isN(p.f.dlvry_rmtmta)){ upf.push( mysql.format('ecsnd_dlvry_rmtmta=?', p.f.dlvry_rmtmta) ); }
-        if(!isN(p.f.dlvry_rmtmta_ip)){ upf.push( mysql.format('ecsnd_dlvry_rmtmta_ip=?', p.f.dlvry_rmtmta_ip) ); }
-        if(!isN(p.f.bnc)){ upf.push( mysql.format('ecsnd_bnc=?', p.f.bnc) ); }
-        if(!isN(p.f.bnc_sbj)){ upf.push( mysql.format('ecsnd_bnc=?', p.f.bnc_sbj) ); }
-        if(!isN(p.f.bnc_msg)){ upf.push( mysql.format('ecsnd_bnc_msg=?', p.f.bnc_msg) ); }
-        if(!isN(p.f.bnc_tp)){ upf.push( mysql.format('ecsnd_bnc_tp=?', p.f.bnc_tp) ); }
-        if(!isN(p.f.bnc_tp_sub)){ upf.push( mysql.format('ecsnd_bnc_tp_sub=?', p.f.bnc_tp_sub) ); }
-        if(!isN(p.f.bnc_rpr)){ upf.push( mysql.format('ecsnd_bnc_rpr=?', p.f.bnc_rpr) ); }
-        if(!isN(p.f.bnc_rule)){ upf.push( mysql.format('ecsnd_bnc_rule=?', p.f.bnc_rule) ); }
-        var upd = upf.join(',');
-    }
-
-    if(!isN(p.id) && !isN(upd)){
-
-        if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
-
-        let save = await DBSave({
-            q:`UPDATE `+DBSelector('ec_snd',bd)+` SET ${upd} WHERE id_ecsnd=? LIMIT 1`,
-            d:[ p.id ]
-        });
-
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
-            rsp.e = 'ok';
-        }else {
-            rsp['w'] = 'No ID result';
-        }
-
-    }
-
-    return rsp;
-
-};
-
-
-
-exports.LeadSendOpened = async function(p=null){
-
-    let rsp={e:'no'};
-
-    if(!isN(p.bd)){
-
-        if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
-        var open_device = AwsDeviceId(p.f.medium);
-
-        let save = await DBSave({
-            q:`INSERT INTO `+DBSelector('ec_op',bd)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p, ecop_ip) VALUES (?,?,?,?,?,?,?,?)`,
-            d:[ 
-                p.f.snd,
-                p.f.date,
-                p.f.hour,
-                open_device,
-                p.f.browser.name,
-                p.f.browser.version,
-                p.f.browser.platform,
-                p.f.ip
-            ]
-        });
-
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0 && save.insertId){
-            rsp.e = 'ok';
-            rsp.id = save.insertId;
-        }else {
-            if(save.w.errno && save.w.sqlMessage){
-				rsp['w'] = save.w.sqlMessage;
-            }
-        }
-
-    }
-
-    return rsp;
-
-};
-
-
-
-
-exports.LeadSendClicked = async function(p=null){
-
-    let rsp={e:'no'};
-
-    if(!isN(p.bd)){
-
-        if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
-        var open_device = AwsDeviceId(p.f.medium);
-
-        let save = await DBSave({
-            q:`INSERT INTO `+DBSelector('ec_trck',bd)+`(ectrck_lnk, ectrck_snd, ectrck_f, ectrck_h, ectrck_m, ectrck_brw_t, ectrck_brw_v, ectrck_brw_p) VALUES (?,?,?,?,?,?,?,?)`,
-            d:[ 
-                p.f.lnk,
-                p.f.snd,
-                p.f.date,
-                p.f.hour,
-                open_device,
-                p.f.browser.name,
-                p.f.browser.version,
-                p.f.browser.platform
-            ]
-        });
-
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0 && save.insertId){
-           
-            rsp.e = 'ok';
-            rsp.id = save.insertId;
-
-            let save_url = await DBSave({
-                q:`INSERT INTO `+DBSelector('ec_trck_attr',bd)+`(ectrckattr_ectrck, ectrckattr_key, ectrckattr_value) VALUES (?,?,?)`,
-                d:[ 
-                    rsp.id,
-                    'url',
-                    p.f.url
-                ]
-            });
-
-            if(!isN(save_url) && !isN(save_url.affectedRows) && save_url.affectedRows > 0 && save_url.insertId){
-                rsp.url = { id:save_url.insertId };
-            }
-
-        }else {
-            if(save.w.errno && save.w.sqlMessage){
-				rsp['w'] = save.w.sqlMessage;
-            }
-        }
-
-    }
-
-    return rsp;
-
-};
-
-
-exports.PushmailLinkDetail = async function(p=null){
-
-    let rsp={e:'no'};
-
-    if(!isN(p.ec) && !isN(p.url)){
+        if(params.type == 'snd'){ field = 'ecsndcmpg_snd'; }
+        else if(params.type == 'cmpg'){ field = 'ecsndcmpg_cmpg'; }
+        else{ field = 'id_ecsndcmpg'; }
 
         let get = await DBGet({
-                            q: `SELECT id_eclnk FROM `+DBSelector('ec_lnk')+` WHERE eclnk_ec=? AND eclnk_lnk_c=? LIMIT 1`,
-                            d:[ p?.ec, p?.url ]
+                            query: `SELECT ecsndcmpg_cmpg FROM `+DBSelector('ec_snd_cmpg')+` WHERE ${field}=? LIMIT 1`,
+                            data:[ params?.id ]
                         });
 
         if(get){
-            rsp.e = 'ok';
+            response.status = true;
             if(!isN(get[0])){
-                rsp.id = get[0].id_eclnk;
+                response.id = get[0].ecsndcmpg_cmpg;
             }
         }else {
-            rsp['w'] = 'No ID result';
+            response.error = 'No ID result';
         }
 
     }
 
-    return rsp;
+    return response;
+
+};
+
+exports.CustomerSendDetail  = async function(params=null){
+
+    let fields,
+        response={ success:false };
+
+    if(params?.t == 'enc'){ fields = 'clfljsnd_enc'; }
+    else if(params?.t == 'id'){ fields = 'clfljsnd_id'; }
+    else{ fields = 'id_clfljsnd'; }
+
+    let get = await DBGet({
+                        query: `SELECT id_clfljsnd FROM `+DBSelector('_cl_flj_snd')+` INNER JOIN _cl_flj ON clfljsnd_clflj = id_clflj WHERE ${fields}=? LIMIT 1`,
+                        data:[ params?.id ]
+                    });
+
+    if(get){
+        response.success = true;
+        if(!isN(get[0])){
+            response.id = get[0].id_clfljsnd;
+        }
+    }else {
+        response.error = 'No ID result';
+    }
+
+    return response;
+
+};
+
+exports.CustomerSendUpdate = async function(params=null){
+
+    let response = { success:false };
+
+    if(!isN(params?.fields)){
+        let upload_fields=[];
+        if(!isN(params?.fields?.est)){ upload_fields.push( mysql.format('clfljsnd_est=?', params?.fields?.est) ); }
+        if(!isN(params?.fields?.bnc)){ upload_fields.push( mysql.format('clfljsnd_bnc=?', params?.fields?.bnc) ); }
+        if(!isN(params?.fields?.bnc_sbj)){ upload_fields.push( mysql.format('clfljsnd_bnc=?', params?.fields?.bnc_sbj) ); }
+        if(!isN(params?.fields?.bnc_msg)){ upload_fields.push( mysql.format('clfljsnd_bnc_msg=?', params?.fields?.bnc_msg) ); }
+        if(!isN(params?.fields?.bnc_tp)){ upload_fields.push( mysql.format('clfljsnd_bnc_tp=?', params?.fields?.bnc_tp) ); }
+        if(!isN(params?.fields?.bnc_tp_sub)){ upload_fields.push( mysql.format('clfljsnd_bnc_tp_sub=?', params?.fields?.bnc_tp_sub) ); }
+        if(!isN(params?.fields?.bnc_rpr)){ upload_fields.push( mysql.format('clfljsnd_bnc_rpr=?', params?.fields?.bnc_rpr) ); }
+        if(!isN(params?.fields?.bnc_rule)){ upload_fields.push( mysql.format('clfljsnd_bnc_rule=?', params?.fields?.bnc_rule) ); }
+        var upload_query = upload_fields.join(',');
+    }
+
+    if(!isN(params?.id) && !isN(upload_query)){
+
+        let SaveRDS =  await DBSave({
+            query:`UPDATE `+DBSelector('_cl_flj_snd')+` SET ${upload_query} WHERE id_clfljsnd=? LIMIT 1`,
+            data:[ params?.id ]
+        });
+
+        if(SaveRDS?.affectedRows > 0){
+            response.success = true;
+        }else {
+            response.error = 'No ID result';
+        }
+
+    }
+
+    return response;
+
+};
+
+
+
+exports.CustomerSendOpened = async function(params=null){
+
+    let response = { success:false };
+
+    if(params?.bd){
+
+        var openDevice = AwsDeviceId(params?.fields?.medium);
+
+        let SaveRDS =  await DBSave({
+            query:`INSERT INTO `+DBSelector('_cl_flj_snd_op')+`(clfljsndop_snd, eclfljsndop_f, clfljsndop_h, clfljsndop_m, clfljsndop_brw_t, clfljsndop_brw_v, clfljsndop_brw_p) VALUES (?,?,?,?,?,?,?)`,
+            data:[ 
+                params?.fields?.snd,
+                params?.fields?.date,
+                params?.fields?.hour,
+                openDevice,
+                params?.fields?.browser.name,
+                params?.fields?.browser.version,
+                params?.fields?.browser.platform
+            ]
+        });
+
+        if(SaveRDS?.affectedRows > 0 && SaveRDS?.insertId){
+
+            response.id = insertRDS.insertId;
+
+            let CampaignSend = await LeadSend_FindCampaign({ id:p?.f?.snd, type:'snd' }),
+                CampaignDetail = CampaignSend?.id ? await GetCampaignDetail({ id:CampaignSend?.id }) : null ;
+
+            if(CampaignDetail?.id && !CampaignDetail?.total?.update){
+
+                let updateDynamo = await DYNAMO.update({
+                                        TableName: `${process?.env?.DYNAMO_PRFX}-ec-cmpg`,
+                                        Key:{ id:CampaignSend?.id },
+                                        UpdateExpression: 'set eccmpg_tot_upd=:vtotupd',
+                                        ExpressionAttributeValues:{
+                                            ":vtotupd": 1
+                                        },
+                                        ReturnValues:"ALL_NEW"
+                                    }).promise();
+
+                if(updateDynamo?.Attributes){
+
+                    let updateRDS = await DBSave({
+                        query:`UPDATE `+DBSelector('ec_cmpg')+` SET eccmpg_tot_upd=? WHERE id_eccmpg=? LIMIT 1`,
+                        data:[ 1, CampaignSend?.id ]
+                    });
+
+                    if(!isN(updateRDS) && !isN(updateRDS.affectedRows) && updateRDS.affectedRows > 0){
+                        response.success = true; 
+                    }
+
+                }
+
+            }
+
+
+        }else {
+            if(SaveRDS?.w?.errno && SaveRDS?.w?.sqlMessage){
+				response.error = SaveRDS?.w?.sqlMessage;
+            }
+        }
+
+    }
+
+    return response;
+
+};
+
+
+
+
+exports.LeadSendDetail = async function(params=null){
+
+    let fields,
+        response={ success:false },
+        database='';
+
+    if(params?.t == 'enc'){ fields = 'ecsnd_enc'; }
+    else if(params?.t == 'id'){ fields = 'ecsnd_id'; }
+    else{ fields = 'id_ecsnd'; }
+
+    if(params?.bd){ database=params?.bd; }
+
+    let get = await DBGet({
+                        query: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec FROM `+DBSelector('ec_snd',database)+` WHERE ${fields}=? LIMIT 1`,
+                        data:[ params?.id ]
+                    });
+
+    if(get){
+        response.success = true;
+        if(!isN(get[0])){
+            response.id = get[0].id_ecsnd;
+            response.cid = get[0].ecsnd_id;
+            response.ec = get[0].ecsnd_ec;
+        }
+    }else {
+        response.error = 'No ID result';
+    }
+
+    return response;
+
+};
+
+
+exports.LeadSendUpdate = async function(params=null){
+
+    let response = { success:false };
+
+    if(!isN(params?.fields)){
+        let upload_fields=[];
+        if(!isN(params?.fields?.cid)){ upload_fields.push( mysql.format('ecsnd_id=?', params?.fields?.cid) ); }
+        if(!isN(params?.fields?.est)){ upload_fields.push( mysql.format('ecsnd_est=?', params?.fields?.est) ); }
+        if(!isN(params?.fields?.dlvry_tmmls)){ upload_fields.push( mysql.format('ecsnd_dlvry_tmmls=?', params?.fields?.dlvry_tmmls) ); }
+        if(!isN(params?.fields?.dlvry_tmstmp)){ upload_fields.push( mysql.format('ecsnd_dlvry_tmstmp=?', params?.fields?.dlvry_tmstmp) ); }
+        if(!isN(params?.fields?.dlvry_smtrsp)){ upload_fields.push( mysql.format('ecsnd_dlvry_smtrsp=?', params?.fields?.dlvry_smtrsp) ); }
+        if(!isN(params?.fields?.dlvry_rmtmta)){ upload_fields.push( mysql.format('ecsnd_dlvry_rmtmta=?', params?.fields?.dlvry_rmtmta) ); }
+        if(!isN(params?.fields?.dlvry_rmtmta_ip)){ upload_fields.push( mysql.format('ecsnd_dlvry_rmtmta_ip=?', params?.fields?.dlvry_rmtmta_ip) ); }
+        if(!isN(params?.fields?.bnc)){ upload_fields.push( mysql.format('ecsnd_bnc=?', params?.fields?.bnc) ); }
+        if(!isN(params?.fields?.bnc_sbj)){ upload_fields.push( mysql.format('ecsnd_bnc=?', params?.fields?.bnc_sbj) ); }
+        if(!isN(params?.fields?.bnc_msg)){ upload_fields.push( mysql.format('ecsnd_bnc_msg=?', params?.fields?.bnc_msg) ); }
+        if(!isN(params?.fields?.bnc_tp)){ upload_fields.push( mysql.format('ecsnd_bnc_tp=?', params?.fields?.bnc_tp) ); }
+        if(!isN(params?.fields?.bnc_tp_sub)){ upload_fields.push( mysql.format('ecsnd_bnc_tp_sub=?', params?.fields?.bnc_tp_sub) ); }
+        if(!isN(params?.fields?.bnc_rpr)){ upload_fields.push( mysql.format('ecsnd_bnc_rpr=?', params?.fields?.bnc_rpr) ); }
+        if(!isN(params?.fields?.bnc_rule)){ upload_fields.push( mysql.format('ecsnd_bnc_rule=?', params?.fields?.bnc_rule) ); }
+        var upload_query = upload_fields.join(',');
+    }
+
+    if(!isN(params?.id) && !isN(upload_query)){
+
+        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
+
+        let SaveRDS =  await DBSave({
+            query:`UPDATE `+DBSelector('ec_snd',database)+` SET ${upload_query} WHERE id_ecsnd=? LIMIT 1`,
+            data:[ params?.id ]
+        });
+
+        if(SaveRDS?.affectedRows > 0){
+            response.success = true;
+        }else {
+            response.error = 'No ID result';
+        }
+
+    }
+
+    return response;
+
+};
+
+
+
+exports.LeadSendOpened = async function(params=null){
+
+    let response = { success:false };
+
+    if(params?.bd){
+
+        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
+        var openDevice = AwsDeviceId(params?.fields?.medium);
+
+        let SaveRDS =  await DBSave({
+            query:`INSERT INTO `+DBSelector('ec_op',database)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p, ecop_ip) VALUES (?,?,?,?,?,?,?,?)`,
+            data:[ 
+                params?.fields?.snd,
+                params?.fields?.date,
+                params?.fields?.hour,
+                openDevice,
+                params?.fields?.browser.name,
+                params?.fields?.browser.version,
+                params?.fields?.browser.platform,
+                params?.fields?.ip
+            ]
+        });
+
+        if(SaveRDS?.affectedRows > 0 && SaveRDS?.insertId){
+            response.success = true;
+            response.id = SaveRDS?.insertId;
+        }else {
+            if(SaveRDS?.w?.errno && SaveRDS?.w?.sqlMessage){
+				response.error = SaveRDS?.w?.sqlMessage;
+            }
+        }
+
+    }
+
+    return response;
+
+};
+
+
+
+
+exports.LeadSendClicked = async function(params=null){
+
+    let response = { success:false };
+
+    if(params?.bd){
+
+        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
+        var openDevice = AwsDeviceId(params?.fields?.medium);
+
+        let SaveRDS =  await DBSave({
+            query:`INSERT INTO `+DBSelector('ec_trck',database)+`(ectrck_lnk, ectrck_snd, ectrck_f, ectrck_h, ectrck_m, ectrck_brw_t, ectrck_brw_v, ectrck_brw_p) VALUES (?,?,?,?,?,?,?,?)`,
+            data:[ 
+                params?.fields?.lnk,
+                params?.fields?.snd,
+                params?.fields?.date,
+                params?.fields?.hour,
+                openDevice,
+                params?.fields?.browser.name,
+                params?.fields?.browser.version,
+                params?.fields?.browser.platform
+            ]
+        });
+
+        if(SaveRDS?.affectedRows > 0 && SaveRDS?.insertId){
+           
+            response.success = true;
+            response.id = SaveRDS?.insertId;
+
+            let SaveUrl = await DBSave({
+                query:`INSERT INTO `+DBSelector('ec_trck_attr',database)+`(ectrckattr_ectrck, ectrckattr_key, ectrckattr_value) VALUES (?,?,?)`,
+                data:[ 
+                    params?.id,
+                    'url',
+                    params?.fields?.url
+                ]
+            });
+
+            if(SaveUrl?.affectedRows > 0 && SaveUrl?.insertId){
+                response.url = { id:SaveUrl?.insertId };
+            }
+
+        }else {
+            if(SaveRDS?.w?.errno && SaveRDS?.w?.sqlMessage){
+				response.error = SaveRDS?.w?.sqlMessage;
+            }
+        }
+
+    }
+
+    return response;
+
+};
+
+
+exports.PushmailLinkDetail = async function(params=null){
+
+    let response = { success:false };
+
+    if(!isN(params?.ec) && !isN(params?.url)){
+
+        let get = await DBGet({
+                            query: `SELECT id_eclnk FROM `+DBSelector('ec_lnk')+` WHERE eclnk_ec=? AND eclnk_lnk_c=? LIMIT 1`,
+                            data:[ p?.ec, p?.url ]
+                        });
+
+        if(get){
+            response.success = true;
+            if(!isN(get[0])){
+                response.id = get[0].id_eclnk;
+            }
+        }else {
+            response.error = 'No ID result';
+        }
+
+    }
+
+    return response;
 
 };

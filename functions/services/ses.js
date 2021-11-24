@@ -22,7 +22,7 @@ const SaveRequest = async function(event){
                         TableName: (process.env.NODE_ENV == 'production' ? 'prd-':'dev-') + 'rqu',
                         Item:{
                             id: date.getTime().toString(),
-                            rq: JSON.stringify( event ),
+                            rquery: JSON.stringify( event ),
                             date_in: date.toISOString()
                         }
                     }).promise();
@@ -52,41 +52,41 @@ const Headers = (h=null)=>{
 };
 
 
-const RecoverIdToBd = async function(p=null){
+const RecoverIdToBd = async function(params=null){
     
-    let rsp={e:'no'};
+    let response = { success:false };
 
-    if(!isN(p) && !isN(p.id) && !isN(p.bd) && !isN(p.cid)){
+    if(!isN(p) && !isN(params?.id) && !isN(params?.bd) && !isN(params?.cid)){
 
         let upd = await LeadSendUpdate({
-            id:p.id,
-            bd:p.bd,
-            f:{
-                cid:p.cid
+            id:params?.id,
+            bd:params?.bd,
+            fields:{
+                cid:params?.cid
             }
         });
 
-        if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-            rsp.e = 'ok';
+        if(upd?.success){
+            response.success = true;
         }else{
-            rsp.w = upd.w;
+            response.error = upd.w;
         }
 
     }
 
-    return rsp;
+    return response;
 
 };
 
 
 
-const BounceGetId = async function(p=null){
+const BounceGetId = async function(params=null){
 
     let detail = null,
         prnt = null,
-        rsp={e:'no'};
+        response={ success:false };
 
-    if(p.t == 'sub'){
+    if(params?.t == 'sub'){
         detail = await ListDetail({ key:'sis_snd_bnc_tp_s' });
     }else{
         detail = await ListDetail({ key:'sis_snd_bnc_tp' });
@@ -96,16 +96,16 @@ const BounceGetId = async function(p=null){
 
         var attr = detail.ls[key];
 
-        if(attr?.key?.vl == p.key){
+        if(attr?.key?.vl == params?.key){
 
-            if(!isN(p.prnt)){
-                prnt = attr[p.prnt].vl;
+            if(!isN(params?.prnt)){
+                prnt = attr[params?.prnt].vl;
             }
 
             if(isN(prnt) || prnt){
-                rsp.e = 'ok';
-                rsp.id = attr.id;
-                rsp.cns = attr.cns;
+                response.success = true;
+                response.id = attr.id;
+                response.cns = attr.cns;
                 return;
             }
 
@@ -113,14 +113,14 @@ const BounceGetId = async function(p=null){
 
     });
 
-    return rsp;
+    return response;
 
 };
 
 
 const Delivery_Init = async function(event){
 
-    var data={e:'no'},
+    var response={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId;
@@ -133,13 +133,13 @@ const Delivery_Init = async function(event){
 
             let upd = await CustomerSendUpdate({
                 id:snd_dt.id,
-                f:{
+                fields:{
                     est:process.env.ID_SNDEST_ACPT
                 }
             });
 
-            if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                data['e'] = 'ok';
+            if(upd?.success){
+                response.success = true;
             }
 
         }
@@ -152,9 +152,9 @@ const Delivery_Init = async function(event){
 
             var snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
 
-            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            if(snd_dt?.success && isN(snd_dt.id)){
                 var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                if(snd_dt?.success && isN(snd_dt.cid)){
                     await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
                 }
             }
@@ -164,7 +164,7 @@ const Delivery_Init = async function(event){
                 let upd = await LeadSendUpdate({
                     id:snd_dt.id,
                     bd:cl_dt.sbd,
-                    f:{
+                    fields:{
                         est:process.env.ID_SNDEST_ACPT,
                         dlvry_tmmls: message.delivery.processingTimeMillis,
                         dlvry_tmstmp: message.delivery.timestamp,
@@ -174,16 +174,16 @@ const Delivery_Init = async function(event){
                     }
                 });
 
-                if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                    data['e'] = 'ok';
+                if(upd?.success){
+                    response.success = true;
                 }else{
-                    data['w'] = !isN(upd.w)?upd.w:'';
+                    response.error = !isN(upd.w)?upd.w:'';
                 }
 
             }else{
 
-                if(isN(snd_dt.id)){ data['w'] += 'snd_dt.id empty'; }
-                if(isN(cl_dt.id)){ data['w'] += 'cl_dt.id empty'; }
+                if(isN(snd_dt.id)){ response.error += 'snd_dt.id empty'; }
+                if(isN(cl_dt.id)){ response.error += 'cl_dt.id empty'; }
 
             }
 
@@ -191,7 +191,7 @@ const Delivery_Init = async function(event){
 
     }
 
-    return data;
+    return response;
 
 };
 
@@ -199,7 +199,7 @@ const Complaint_Init = async function(event){
     
     await SaveRequest( event );
 
-    var data={e:'no'},
+    var data={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId;
@@ -214,17 +214,16 @@ const Complaint_Init = async function(event){
 
                 var eml = message.complaint.complainedRecipients[key].emailAddress;
                 var us_dt = await UserDetail({ id:eml, t:'eml' });
-
-                var upd = await UserUpdate({
+                var upload_query = await UserUpdate({
                     id:us_dt.id,
-                    f:{
+                    fields:{
                         dnc: message.complaint.complaintFeedbackType,
                         sndi: 2
                     }
                 });
 
-                if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                    data['e'] = 'ok';
+                if(upload_query?.success){
+                    response.success = true;
                 }
 
             });
@@ -239,9 +238,9 @@ const Complaint_Init = async function(event){
 
             var snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
 
-            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            if(snd_dt?.success && isN(snd_dt.id)){
                 var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                if(snd_dt?.success && isN(snd_dt.cid)){
                     await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
                 }
             }
@@ -256,10 +255,10 @@ const Complaint_Init = async function(event){
                         
                         var eml_dt = await LeadEmailDetail({ id:eml, bd:cl_dt.sbd, t:'eml' });
 
-                        var upd = await LeadEmailUpdate({
+                        var upload_query = await LeadEmailUpdate({
                             id:eml_dt.id,
                             bd:cl_dt.sbd,
-                            f:{
+                            fields:{
                                 rjct: 1,
                                 sndi: 2,
                                 dnc: message.complaint.complaintFeedbackType,
@@ -267,8 +266,8 @@ const Complaint_Init = async function(event){
                             }
                         });
 
-                        if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                            data['e'] = 'ok';
+                        if(upload_query?.success){
+                            response.success = true;
                         }
 
                     }
@@ -288,7 +287,7 @@ const Complaint_Init = async function(event){
 
 const Bounce_Init = async function(event){
 
-    var data={e:'no'},
+    var data={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId,
@@ -303,7 +302,7 @@ const Bounce_Init = async function(event){
 
             let upd = await CustomerSendUpdate({
                 id:snd_dt.id,
-                f:{
+                fields:{
                     est: process.env.ID_SNDEST_RBT,
                     bnc: JSON.stringify(message.bounce),
                     bnc_sbj: event.Records[0].Sns.Subject,
@@ -314,8 +313,8 @@ const Bounce_Init = async function(event){
                 }
             });
 
-            if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                data['e'] = 'ok';
+            if(upd?.success){
+                response.success = true;
             }
 
         }
@@ -328,9 +327,9 @@ const Bounce_Init = async function(event){
 
             var snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd });
 
-            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+            if(snd_dt?.success && isN(snd_dt.id)){
                 var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+                if(snd_dt?.success && isN(snd_dt.cid)){
                     await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
                 }
             }
@@ -340,7 +339,7 @@ const Bounce_Init = async function(event){
                 let upd = await LeadSendUpdate({
                     id:snd_dt.id,
                     bd:cl_dt.sbd,
-                    f:{
+                    fields:{
                         est:process.env.ID_SNDEST_RBT,
                         bnc: JSON.stringify(message.bounce),
                         bnc_sbj: event.Records[0].Sns.Subject,
@@ -351,8 +350,8 @@ const Bounce_Init = async function(event){
                     }
                 });
 
-                if(!isN(upd) && !isN(upd.e) && upd.e == 'ok'){
-                    data['e'] = 'ok';
+                if(upd?.success){
+                    response.success = true;
                 }
 
             }
@@ -368,7 +367,7 @@ const Bounce_Init = async function(event){
 
 const Open_Init = async function(event){
     
-    var data={e:'no'},
+    var response={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId,
@@ -383,7 +382,7 @@ const Open_Init = async function(event){
 
             let insert = await CustomerSendOpened({
                 id:snd_dt.id,
-                f:{
+                fields:{
                     snd:snd_dt.id,
                     date:datetme.d.date,
                     hour:datetme.d.time,
@@ -396,11 +395,11 @@ const Open_Init = async function(event){
                 }
             });
 
-            if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
-                data['e'] = 'ok';
+            if(insert?.success){
+                response.success = true;
                 data['id'] = insert.id;
             }else{
-                data['w'] = insert.w;
+                response.error = insert.w;
             }
 
 
@@ -413,9 +412,9 @@ const Open_Init = async function(event){
             snd_dt = await LeadSendDetail({ id:messageId, t:'id', bd:cl_dt.sbd }),
             datetme = getTimefromISO(message.open.timestamp);
 
-        if(snd_dt.e == 'ok' && isN(snd_dt.id)){
+        if(snd_dt?.success && isN(snd_dt.id)){
             var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-            if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+            if(snd_dt?.success && isN(snd_dt.cid)){
                 await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
             }
         }
@@ -425,7 +424,7 @@ const Open_Init = async function(event){
             let insert = await LeadSendOpened({
                 id:snd_dt.id,
                 bd:cl_dt.sbd,
-                f:{
+                fields:{
                     snd:snd_dt.id,
                     date:datetme.d.date,
                     hour:datetme.d.time,
@@ -439,25 +438,25 @@ const Open_Init = async function(event){
                 }
             });
 
-            if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
-                data['e'] = 'ok';
-                data['id'] = insert.id;
+            if(insert?.success){
+                response.success = true;
+                response.id = insert.id;
             }else{
-                data['w'] = insert.w;
+                response.error = insert.w;
             }
 
         }
 
     }
 
-    return data;
+    return response;
 
 };
 
 
 const Click_Init = async function(event){
 
-    var data={e:'no'},
+    var response = { success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
         messageId = message.mail.messageId,
@@ -475,9 +474,9 @@ const Click_Init = async function(event){
                 datetme = getTimefromISO(message.click.timestamp),
                 ttobd = '';
 
-            if(snd_dt.e == 'ok' && isN(snd_dt.id)){
-                var snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
-                if(snd_dt.e == 'ok' && isN(snd_dt.cid)){
+            if(snd_dt?.success && isN(snd_dt.id)){
+                snd_dt = await LeadSendDetail({ id:header['SUMR-ID'], t:'enc', bd:cl_dt.sbd });
+                if(snd_dt?.success && isN(snd_dt.cid)){
                     await RecoverIdToBd({ id:snd_dt.id, bd:cl_dt.sbd, cid:messageId });
                 }
             }
@@ -496,7 +495,7 @@ const Click_Init = async function(event){
                 let insert = await LeadSendClicked({
                     id:snd_dt.id,
                     bd:cl_dt.sbd,
-                    f:{
+                    fields:{
                         lnk:lnk_dt.id,
                         snd:snd_dt.id,
                         url:message.click.link,
@@ -511,11 +510,11 @@ const Click_Init = async function(event){
                     }
                 });
 
-                if(!isN(insert) && !isN(insert.e) && insert.e == 'ok'){
-                    data['e'] = 'ok';
+                if(insert?.success){
+                    response.success = true;
                     data['id'] = insert.id;
                 }else{
-                    data['w'] = insert.w;
+                    response.error = insert.w;
                 }
 
             }
@@ -524,20 +523,20 @@ const Click_Init = async function(event){
 
     }
 
-    return data;
+    return response;
 
 };
 
 
 const Oth_Init = async function(event){
 
-    var data={e:'no'};
+    var data={ success:false };
 
     try {
         await SaveRequest( event );
-        data['e'] = 'ok';
+        response.success = true;
     } catch (err) {
-        data['w'] = err;
+        response.error = err;
     }
 
     return data;

@@ -10,7 +10,7 @@ exports.isN = (p)=>{
 exports.Path = (p,n)=>{
 	try{
 		if(!this.isN(p)){
-			var path = p.split('/');
+			var path = params?.split('/');
 			if(!this.isN( path[n] )){ return path[n]; }
 		}
 	}catch(err) {

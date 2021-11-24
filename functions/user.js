@@ -1,61 +1,61 @@
 const { DBGet, DBSave, DBSelector } = require('./connection');
 const { isN } = require('./common');
-exports.UserDetail = async function(p=null){
+exports.UserDetail = async function(params=null){
 
-    let fld,
-        rsp={e:'no'};
+    let fields,
+        response={ success:false };
 
-    if(p.t == 'enc'){ fld = 'us_enc'; }
-    else if(p.t == 'eml'){ fld = 'us_user'; }
-    else{ fld = 'id_us'; }
+    if(params?.t == 'enc'){ fields = 'us_enc'; }
+    else if(params?.t == 'eml'){ fields = 'us_user'; }
+    else{ fields = 'id_us'; }
 
     let get = await DBGet({
-                        q: `SELECT id_us FROM `+DBSelector('us')+` WHERE ${fld}=? LIMIT 1`,
-                        d:[ p.id ]
+                        query: `SELECT id_us FROM `+DBSelector('us')+` WHERE ${fields}=? LIMIT 1`,
+                        data:[ params?.id ]
                     });
 
     if(get){
-        rsp.e = 'ok';
+        response.success = true;
         if(!isN(get[0])){
-            rsp.id = get[0].id_us;
+            response.id = get[0].id_us;
         }
     }else {
-        rsp['w'] = 'No ID result';
+        response.error = 'No ID result';
     }
 
-    return rsp;
+    return response;
 
 };
 
-exports.UserUpdate = async function(p=null){
+exports.UserUpdate = async function(params=null){
 
-    let rsp={e:'no'};
+    let response = { success:false };
 
-    if(!isN(p.f)){
-        let upf=[];
-        if(!isN(p.f.dnc)){ upf.push( mysql.format('us_eml_dnc=?', p.f.dnc) ); }
-        if(!isN(p.f.rjct)){ upf.push( mysql.format('us_eml_rjct=?', p.f.rjct) ); }
-        if(!isN(p.f.sndi)){ upf.push( mysql.format('us_eml_sndi=?', p.f.sndi) ); }
-        var upd = upf.join(',');
+    if(!isN(params?.fields)){
+        let upload_fields=[];
+        if(!isN(params?.fields?.dnc)){ upload_fields.push( mysql.format('us_eml_dnc=?', params?.fields?.dnc) ); }
+        if(!isN(params?.fields?.rjct)){ upload_fields.push( mysql.format('us_eml_rjct=?', params?.fields?.rjct) ); }
+        if(!isN(params?.fields?.sndi)){ upload_fields.push( mysql.format('us_eml_sndi=?', params?.fields?.sndi) ); }
+        var upload_query = upload_fields.join(',');
     }
 
-    if(!isN(p.id) && !isN(upd)){
+    if(!isN(params?.id) && !isN(upload_query)){
 
-        if(!isN(p.bd)){ var bd=p.bd; }else{ var bd=''; }
+        if(params?.bd){ var bd=params?.bd; }else{ var bd=''; }
 
-        let save = await DBSave({
-            q:`UPDATE `+DBSelector('us',bd)+` SET ${upd} WHERE id_us=? LIMIT 1`,
-            d:[ p.id ]
+        let SaveRDS =  await DBSave({
+            query:`UPDATE `+DBSelector('us',database)+` SET ${upload_query} WHERE id_us=? LIMIT 1`,
+            data:[ params?.id ]
         });
 
-        if(!isN(save) && !isN(save.affectedRows) && save.affectedRows > 0){
-            rsp.e = 'ok';
+        if(SaveRDS?.affectedRows > 0){
+            response.success = true;
         }else {
-            rsp['w'] = 'No ID result';
+            response.error = 'No ID result';
         }
 
     }
 
-    return rsp;
+    return response;
 
 };
