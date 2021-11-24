@@ -378,7 +378,7 @@ const Open_Init = async function(event){
 
         let SendDetail = await CustomerSendDetail({ id:messageId, type:'id' });
         
-        if(!isN(SendDetail.id)){
+        if(!isN(SendDetail?.id)){
 
             let insert = await CustomerSendOpened({
                 id:SendDetail.id,

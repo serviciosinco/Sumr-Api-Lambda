@@ -7,9 +7,9 @@ exports.isN = (p)=>{
 	}
 };
 
-exports.Path = (p,n)=>{
+exports.Path = (params,n)=>{
 	try{
-		if(!this.isN(p)){
+		if(!this.isN(params)){
 			var path = params?.split('/');
 			if(!this.isN( path[n] )){ return path[n]; }
 		}
