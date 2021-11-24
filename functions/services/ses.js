@@ -56,7 +56,7 @@ const RecoverIdToBd = async function(params=null){
     
     let response = { success:false };
 
-    if(!isN(p) && !isN(params?.id) && !isN(params?.bd) && !isN(params?.cid)){
+    if(params?.id && params?.bd && params?.cid){
 
         let upd = await LeadSendUpdate({
             id:params?.id,
