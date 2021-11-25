@@ -242,6 +242,13 @@ exports.AccountSendOpened = async function(params=null){
 
 exports.GetLeadSendDetail = async function(params=null){
 
+
+    /* TEMPO TO SEE CAMPAIGN DIFF */
+    console.log('Check TIME');
+    let CampaignSend = await LeadSend_FindCampaign({ id:SendDetail.id, type:'snd' })
+        PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
+
+        
     let fields,
         response={ success:false },
         database='';
