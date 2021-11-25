@@ -248,6 +248,12 @@ exports.GetLeadSendDetail = async function(params=null){
     let CampaignSend = await LeadSend_FindCampaign({ id:params?.id, type:'snd' })
         PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
 
+        console.log('CampaignSend:', CampaignSend);
+        console.log('PutOnQueueUpdate:', PutOnQueueUpdate);
+
+
+
+        
 
     let fields,
         response={ success:false },
