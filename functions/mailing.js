@@ -84,7 +84,7 @@ const CampaignQueueToUpdate = async function(params=null){
 
     if(params?.id){
 
-        let CampaignDetail = CampaignSend?.id ? await GetCampaignDetail({ id:params?.id }) : null ;
+        let CampaignDetail = params?.id ? await GetCampaignDetail({ id:params?.id }) : null ;
 
         if(CampaignDetail?.id && !CampaignDetail?.total?.update){
 
@@ -411,7 +411,16 @@ exports.LeadSendClicked = async function(params=null){
             });
 
             if(SaveUrl?.affectedRows > 0 && SaveUrl?.insertId){
+                
                 response.url = { id:SaveUrl?.insertId };
+
+                let CampaignSend = await LeadSend_FindCampaign({ id:params?.fields?.snd, type:'snd' })
+                    PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
+
+                if(PutOnQueueUpdate.success){
+                    response.success = true;
+                }
+
             }
 
         }else {
