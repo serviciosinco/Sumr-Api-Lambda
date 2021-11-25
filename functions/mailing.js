@@ -25,19 +25,33 @@ const GetCampaignDetail = async( params )=>{
             
             var row = await DYNAMO.scan({
                     TableName: tableSource,
-                    ProjectionExpression: 'id_eccmpg, eccmpg_tot_upd',
+                    ProjectionExpression: 'id_eccmpg, eccmpg_tot_upd, eccmpg_p_f',
                     FilterExpression: '#id=:idv',
                     ExpressionAttributeValues: {
                         ':idv': params?.id,
                     }
                 }).promise();
-            
+
+        }
+
+        if(row?.Items[0]){
+
             response.id = row?.Items[0]?.id_eccmpg;
             response.total = {
                 update : nToBol( row?.Items[0]?.eccmpg_tot_upd )
             };
 
+            let DateNow = new Date(),
+                DateSent = new Date(row?.Items[0]?.eccmpg_p_f),
+                DiffTime = DateNow.getTime() - DateSent.getTime();
+                DiffInDays = DiffTime / (1000 * 3600 * 24);
+
+            response.diff = {
+                days:DiffInDays
+            }
+
         }
+
 
     }
 
@@ -84,7 +98,7 @@ const CampaignQueueToUpdate = async function(params=null){
 
     if(params?.id){
 
-        let CampaignDetail = params?.id ? await GetCampaignDetail({ id:params?.id }) : null ;
+        let CampaignDetail = params?.id ? await GetCampaignDetail({ id:params?.id }) : null ; console.log('CampaignDetail:', CampaignDetail);
 
         if(CampaignDetail?.id && !CampaignDetail?.total?.update){
 
