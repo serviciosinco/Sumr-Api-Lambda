@@ -194,7 +194,7 @@ exports.GetLeadSendDetail = async function(params=null){
     if(params?.bd){ database=params?.bd; }
 
     let get = await DBGet({
-                        query: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec FROM `+DBSelector('ec_snd',database)+` WHERE ${fields}=? LIMIT 1`,
+                        query: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec, ecsnd_est FROM `+DBSelector('ec_snd',database)+` WHERE ${fields}=? LIMIT 1`,
                         data:[ params?.id ]
                     });
 
@@ -204,6 +204,7 @@ exports.GetLeadSendDetail = async function(params=null){
             response.id = get[0].id_ecsnd;
             response.cid = get[0].ecsnd_id;
             response.ec = get[0].ecsnd_ec;
+            response.est = get[0].ecsnd_est;
         }
     }else {
         response.error = 'No ID result';

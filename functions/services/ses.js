@@ -118,10 +118,60 @@ const BounceGetId = async function(params=null){
 };
 
 
+const Send_Init = async function(event){
+
+    await SaveRequest( event );
+
+    var response={ success:false },
+        message = JSON.parse(event.Records[0].Sns.Message),
+        header = Headers(message.mail.headers),
+        messageId = message.mail.messageId;
+
+    if(header['SUMR-FLJ'] == 'ec'){
+
+        var AccountDetail = await GetAccountDetail({ type:'enc', id:header['SUMR-CL'] });
+
+        if(AccountDetail?.sbd){
+
+            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
+
+            if(!SendDetail?.cid && SendDetail?.id && AccountDetail.id && AccountDetail.est == process.env.ID_SNDEST_PRG){
+
+                let upd = await LeadSendUpdate({
+                    id:SendDetail.id,
+                    bd:AccountDetail.sbd,
+                    fields:{
+                        est:process.env.ID_SNDEST_SND,
+                        cid:messageId
+                    }
+                });
+
+                if(upd?.success){
+                    response.success = true;
+                }else{
+                    response.error = !isN(upd.w)?upd.w:'';
+                }
+
+            }else{
+
+                if(isN(SendDetail?.id)){ response.error += 'SendDetail.id empty'; }
+                if(isN(AccountDetail?.id)){ response.error += 'AccountDetail.id empty'; }
+
+            }
+
+        }
+
+    }
+
+    return response;
+
+};
+
+
 const Delivery_Init = async function(event){
 
     await SaveRequest( event );
-    
+
     var response={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
@@ -161,7 +211,7 @@ const Delivery_Init = async function(event){
                 }
             }
 
-            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
+            if(SendDetail?.id && AccountDetail.id){
 
                 let upd = await LeadSendUpdate({
                     id:SendDetail.id,
@@ -247,7 +297,7 @@ const Complaint_Init = async function(event){
                 }
             }
 
-            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
+            if(SendDetail?.id && AccountDetail.id){
 
                 for await (let lead of message.complaint.complainedRecipients) {
 
@@ -336,7 +386,7 @@ const Bounce_Init = async function(event){
                 }
             }
 
-            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
+            if(SendDetail?.id && AccountDetail.id){
 
                 let upd = await LeadSendUpdate({
                     id:SendDetail.id,
@@ -419,7 +469,7 @@ const Open_Init = async function(event){
             }
         }
 
-        if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
+        if(SendDetail?.id && AccountDetail.id){
 
             let insert = await LeadSendOpened({
                 id:SendDetail.id,
@@ -481,7 +531,7 @@ const Click_Init = async function(event){
                 }
             }
 
-            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
+            if(SendDetail?.id && AccountDetail.id){
 
                 var clickTags = message.click.linkTags;
                 var lnk_dt = await PushmailLinkDetail({ ec:SendDetail.ec, url:message.click.link });
@@ -549,7 +599,11 @@ exports.Service_SES = async function(event){
         message = JSON.parse(event.Records[0].Sns.Message),
         type = message.eventType ? message.eventType : message.notificationType;
 
-    if(type == 'Delivery'){
+    if(type == 'Send'){
+
+        result = await Send_Init(event);
+
+    }else if(type == 'Delivery'){
 
         result = await Delivery_Init(event);
 
