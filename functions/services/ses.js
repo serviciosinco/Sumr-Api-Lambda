@@ -120,6 +120,8 @@ const BounceGetId = async function(params=null){
 
 const Delivery_Init = async function(event){
 
+    await SaveRequest( event );
+    
     var response={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
         header = Headers(message.mail.headers),
@@ -152,14 +154,14 @@ const Delivery_Init = async function(event){
 
             var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
 
-            if(SendDetail?.success && isN(SendDetail.id)){
+            if(SendDetail?.success && isN(SendDetail?.id)){
                 var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
                     await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
                 }
             }
 
-            if(!isN(SendDetail.id) && !isN(AccountDetail.id)){
+            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
 
                 let upd = await LeadSendUpdate({
                     id:SendDetail.id,
@@ -182,8 +184,8 @@ const Delivery_Init = async function(event){
 
             }else{
 
-                if(isN(SendDetail.id)){ response.error += 'SendDetail.id empty'; }
-                if(isN(AccountDetail.id)){ response.error += 'AccountDetail.id empty'; }
+                if(isN(SendDetail?.id)){ response.error += 'SendDetail.id empty'; }
+                if(isN(AccountDetail?.id)){ response.error += 'AccountDetail.id empty'; }
 
             }
 
@@ -238,14 +240,14 @@ const Complaint_Init = async function(event){
 
             var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
 
-            if(SendDetail?.success && isN(SendDetail.id)){
+            if(SendDetail?.success && isN(SendDetail?.id)){
                 var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
                     await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
                 }
             }
 
-            if(!isN(SendDetail.id) && !isN(AccountDetail.id)){
+            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
 
                 for await (let lead of message.complaint.complainedRecipients) {
 
@@ -327,14 +329,14 @@ const Bounce_Init = async function(event){
 
             var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
 
-            if(SendDetail?.success && isN(SendDetail.id)){
+            if(SendDetail?.success && isN(SendDetail?.id)){
                 var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
                     await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
                 }
             }
 
-            if(!isN(SendDetail.id) && !isN(AccountDetail.id)){
+            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
 
                 let upd = await LeadSendUpdate({
                     id:SendDetail.id,
@@ -410,14 +412,14 @@ const Open_Init = async function(event){
             SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd }),
             datetme = getTimefromISO(message.open.timestamp);
 
-        if(SendDetail?.success && isN(SendDetail.id)){
+        if(SendDetail?.success && isN(SendDetail?.id)){
             var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
             if(SendDetail?.success && isN(SendDetail.cid)){
                 await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
             }
         }
 
-        if(!isN(SendDetail.id) && !isN(AccountDetail.id)){
+        if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
 
             let insert = await LeadSendOpened({
                 id:SendDetail.id,
@@ -472,14 +474,14 @@ const Click_Init = async function(event){
                 datetme = getTimefromISO(message.click.timestamp),
                 ttobd = '';
 
-            if(SendDetail?.success && isN(SendDetail.id)){
+            if(SendDetail?.success && isN(SendDetail?.id)){
                 SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
                     await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
                 }
             }
 
-            if(!isN(SendDetail.id) && !isN(AccountDetail.id)){
+            if(!isN(SendDetail?.id) && !isN(AccountDetail.id)){
 
                 var clickTags = message.click.linkTags;
                 var lnk_dt = await PushmailLinkDetail({ ec:SendDetail.ec, url:message.click.link });
