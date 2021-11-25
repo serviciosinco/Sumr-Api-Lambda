@@ -100,7 +100,7 @@ const CampaignQueueToUpdate = async function(params=null){
 
         let CampaignDetail = params?.id ? await GetCampaignDetail({ id:params?.id }) : null ; console.log('CampaignDetail:', CampaignDetail);
 
-        if(CampaignDetail?.id && !CampaignDetail?.total?.update){
+        if(CampaignDetail?.id && !CampaignDetail?.total?.update && CampaignDetail?.diff?.days < 60){
 
             let updateDynamo = await DYNAMO.update({
                                     TableName: `${process?.env?.DYNAMO_PRFX}-ec-cmpg`,
@@ -124,6 +124,10 @@ const CampaignQueueToUpdate = async function(params=null){
                 }
 
             }
+
+        }else{
+
+            console.log(`No update campaign ${ CampaignDetail?.diff?.days } days left`);
 
         }
 
@@ -258,17 +262,6 @@ exports.GetLeadSendDetail = async function(params=null){
     if(get){
         response.success = true;
         if(!isN(get[0])){
-
-            /* TEMPO TO SEE CAMPAIGN DIFF */
-            console.log('Check TIME');
-            let CampaignSend = await LeadSend_FindCampaign({ id:get[0].id_ecsnd, type:'snd', account:params?.account })
-                PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
-    
-            console.log('params?.id:', get[0].id_ecsnd);
-            console.log('CampaignSend:', CampaignSend);
-            console.log('PutOnQueueUpdate:', PutOnQueueUpdate);
-        
-
             response.id = get[0].id_ecsnd;
             response.cid = get[0].ecsnd_id;
             response.ec = get[0].ecsnd_ec;
