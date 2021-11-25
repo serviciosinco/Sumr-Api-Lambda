@@ -1,6 +1,8 @@
-const mysql = require('promise-mysql');
-const { DBGet, DBSave, DBSelector } = require('./connection');
-const { isN, AwsDeviceId } = require('./common');
+const   mysql = require('promise-mysql'),
+        { DBGet, DBSave, DBSelector } = require('./connection'),
+        { isN, AwsDeviceId } = require('./common'),
+        AWS = require('aws-sdk'),
+        DYNAMO = new AWS.DynamoDB.DocumentClient();
 
 
 const GetCampaignDetail = async( params )=>{
@@ -249,7 +251,31 @@ exports.LeadSendUpdate = async function(params=null){
         });
 
         if(SaveRDS?.affectedRows > 0){
-            response.success = true;
+
+            if(!isN(params?.fields?.est)){
+                
+                let updateDynamo = await DYNAMO.update({
+                    TableName: `${process?.env?.DYNAMO_PRFX}-ec-snd`,
+                    Key:{ id:params?.id },
+                    UpdateExpression: 'set ecsnd_est=:vest',
+                    ExpressionAttributeValues:{
+                        ":vest": params?.fields?.est
+                    },
+                    ReturnValues:"ALL_NEW"
+                }).promise();
+                
+                if(updateDynamo?.Attributes){
+
+                    response.success = true;
+
+                }
+
+            }else{
+
+                response.success = true;
+
+            }
+
         }else {
             response.error = 'No ID result';
         }
