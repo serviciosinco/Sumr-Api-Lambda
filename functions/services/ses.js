@@ -135,6 +135,11 @@ const Send_Init = async function(event){
 
             var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', account:AccountDetail.sbd });
 
+            /* TEMPO TO SEE CAMPAIGN DIFF */
+        console.log('Check TIME');
+        let CampaignSend = await LeadSend_FindCampaign({ id:SendDetail.id, type:'snd' })
+            PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
+
             if(!SendDetail?.cid && SendDetail?.id && AccountDetail.id && AccountDetail.est == process.env.ID_SNDEST_PRG){
 
                 let upd = await LeadSendUpdate({
