@@ -12,10 +12,8 @@ exports.LeadEmailDetail = async function(params=null){
     else if(params?.type == 'eml'){ fields = 'cnteml_eml'; }
     else{ fields = 'id_cnteml'; }
 
-    if(params?.bd){ database=params?.bd; }
-
     let result = await DBGet({
-                        query: `SELECT id_cnteml FROM `+DBSelector('cnt_eml',database)+` WHERE ${fields}=? LIMIT 1`,
+                        query: `SELECT id_cnteml FROM `+DBSelector('cnt_eml',{ account:params?.account })+` WHERE ${fields}=? LIMIT 1`,
                         data:[ params?.id ]
                     });
 
@@ -48,10 +46,8 @@ exports.LeadEmailUpdate = async function(params=null){
 
     if(!isN(params?.id) && !isN(upload_query)){
 
-        if(params?.bd){ database=params?.bd; }
-
         let SaveRDS =  await DBSave({
-            query:`UPDATE `+DBSelector('cnt_eml',database)+` SET ${upload_query} WHERE id_cnteml=? LIMIT 1`,
+            query:`UPDATE `+DBSelector('cnt_eml',{ account:params?.account })+` SET ${upload_query} WHERE id_cnteml=? LIMIT 1`,
             data:[ params?.id ]
         });
 

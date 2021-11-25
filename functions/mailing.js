@@ -146,7 +146,7 @@ exports.AccountSendOpened = async function(params=null){
 
     let response = { success:false };
 
-    if(params?.bd){
+    if(params?.fields?.snd){
 
         var openDevice = AwsDeviceId(params?.fields?.medium);
 
@@ -193,10 +193,8 @@ exports.GetLeadSendDetail = async function(params=null){
     else if(params?.type == 'id'){ fields = 'ecsnd_id'; }
     else{ fields = 'id_ecsnd'; }
 
-    if(params?.bd){ database=params?.bd; }
-
     let get = await DBGet({
-                        query: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec, ecsnd_est FROM `+DBSelector('ec_snd',database)+` WHERE ${fields}=? LIMIT 1`,
+                        query: `SELECT id_ecsnd, ecsnd_id, ecsnd_ec, ecsnd_est FROM `+DBSelector('ec_snd',{ account:params?.account })+` WHERE ${fields}=? LIMIT 1`,
                         data:[ params?.id ]
                     });
 
@@ -219,8 +217,7 @@ exports.GetLeadSendDetail = async function(params=null){
 
 exports.LeadSendUpdate = async function(params=null){
 
-    let response = { success:false },
-        database = '';
+    let response = { success:false };
 
     if(!isN(params?.fields)){
         let upload_fields=[];
@@ -243,10 +240,8 @@ exports.LeadSendUpdate = async function(params=null){
 
     if(!isN(params?.id) && !isN(upload_query)){
 
-        if(params?.bd){ database=params?.bd; }
-
         let SaveRDS =  await DBSave({
-            query:`UPDATE `+DBSelector('ec_snd',database)+` SET ${upload_query} WHERE id_ecsnd=? LIMIT 1`,
+            query:`UPDATE `+DBSelector('ec_snd',{ account:params?.account })+` SET ${upload_query} WHERE id_ecsnd=? LIMIT 1`,
             data:[ params?.id ]
         });
 
@@ -290,16 +285,14 @@ exports.LeadSendUpdate = async function(params=null){
 
 exports.LeadSendOpened = async function(params=null){
 
-    let response = { success:false },
-        database = '';
+    let response = { success:false };
 
-    if(params?.bd){
+    if(params?.account){
 
-        if(params?.bd){ database=params?.bd; }
         var openDevice = AwsDeviceId(params?.fields?.medium);
 
         let SaveRDS =  await DBSave({
-            query:`INSERT INTO `+DBSelector('ec_op',database)+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p, ecop_ip) VALUES (?,?,?,?,?,?,?,?)`,
+            query:`INSERT INTO `+DBSelector('ec_op',{ account:params?.account })+`(ecop_snd, ecop_f, ecop_h, ecop_m, ecop_brw_t, ecop_brw_v, ecop_brw_p, ecop_ip) VALUES (?,?,?,?,?,?,?,?)`,
             data:[ 
                 params?.fields?.snd,
                 params?.fields?.date,
@@ -363,16 +356,14 @@ exports.LeadSendOpened = async function(params=null){
 
 exports.LeadSendClicked = async function(params=null){
 
-    let response = { success:false },
-        database = '';
+    let response = { success:false };
 
-    if(params?.bd){
+    if(params?.account){
 
-        if(params?.bd){ database=params?.bd; }
         var openDevice = AwsDeviceId(params?.fields?.medium);
 
         let SaveRDS =  await DBSave({
-            query:`INSERT INTO `+DBSelector('ec_trck',database)+`(ectrck_lnk, ectrck_snd, ectrck_f, ectrck_h, ectrck_m, ectrck_brw_t, ectrck_brw_v, ectrck_brw_p) VALUES (?,?,?,?,?,?,?,?)`,
+            query:`INSERT INTO `+DBSelector('ec_trck',{ account:params?.account })+`(ectrck_lnk, ectrck_snd, ectrck_f, ectrck_h, ectrck_m, ectrck_brw_t, ectrck_brw_v, ectrck_brw_p) VALUES (?,?,?,?,?,?,?,?)`,
             data:[ 
                 params?.fields?.lnk,
                 params?.fields?.snd,
@@ -391,7 +382,7 @@ exports.LeadSendClicked = async function(params=null){
             response.id = SaveRDS?.insertId;
 
             let SaveUrl = await DBSave({
-                query:`INSERT INTO `+DBSelector('ec_trck_attr',database)+`(ectrckattr_ectrck, ectrckattr_key, ectrckattr_value) VALUES (?,?,?)`,
+                query:`INSERT INTO `+DBSelector('ec_trck_attr',{ account:params?.account })+`(ectrckattr_ectrck, ectrckattr_key, ectrckattr_value) VALUES (?,?,?)`,
                 data:[ 
                     params?.id,
                     'url',

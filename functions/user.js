@@ -29,8 +29,7 @@ exports.UserDetail = async function(params=null){
 
 exports.UserUpdate = async function(params=null){
 
-    let response = { success:false },
-        database = '';
+    let response = { success:false };
 
     if(!isN(params?.fields)){
         let upload_fields=[];
@@ -42,10 +41,8 @@ exports.UserUpdate = async function(params=null){
 
     if(!isN(params?.id) && !isN(upload_query)){
 
-        if(params?.bd){ database=params?.bd; }
-
         let SaveRDS =  await DBSave({
-            query:`UPDATE `+DBSelector('us',database)+` SET ${upload_query} WHERE id_us=? LIMIT 1`,
+            query:`UPDATE `+DBSelector('us')+` SET ${upload_query} WHERE id_us=? LIMIT 1`,
             data:[ params?.id ]
         });
 

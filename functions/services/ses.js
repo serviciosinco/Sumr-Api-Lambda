@@ -56,11 +56,11 @@ const RecoverIdToBd = async function(params=null){
     
     let response = { success:false };
 
-    if(params?.id && params?.bd && params?.cid){
+    if(params?.id && params?.account && params?.cid){
 
         let upd = await LeadSendUpdate({
             id:params?.id,
-            bd:params?.bd,
+            account:params?.account,
             fields:{
                 cid:params?.cid
             }
@@ -133,13 +133,13 @@ const Send_Init = async function(event){
 
         if(AccountDetail?.sbd){
 
-            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
+            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', account:AccountDetail.sbd });
 
             if(!SendDetail?.cid && SendDetail?.id && AccountDetail.id && AccountDetail.est == process.env.ID_SNDEST_PRG){
 
                 let upd = await LeadSendUpdate({
                     id:SendDetail.id,
-                    bd:AccountDetail.sbd,
+                    account:AccountDetail.sbd,
                     fields:{
                         est:process.env.ID_SNDEST_SND,
                         cid:messageId
@@ -202,12 +202,12 @@ const Delivery_Init = async function(event){
 
         if(AccountDetail?.sbd){
 
-            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
+            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', account:AccountDetail.sbd });
 
             if(SendDetail?.success && isN(SendDetail?.id)){
-                var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
+                var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', account:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
-                    await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
+                    await RecoverIdToBd({ id:SendDetail.id, account:AccountDetail.sbd, cid:messageId });
                 }
             }
 
@@ -215,7 +215,7 @@ const Delivery_Init = async function(event){
 
                 let upd = await LeadSendUpdate({
                     id:SendDetail.id,
-                    bd:AccountDetail.sbd,
+                    account:AccountDetail.sbd,
                     fields:{
                         est:process.env.ID_SNDEST_ACPT,
                         dlvry_tmmls: message.delivery.processingTimeMillis,
@@ -288,12 +288,12 @@ const Complaint_Init = async function(event){
 
         if(AccountDetail?.sbd){
 
-            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
+            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', account:AccountDetail.sbd });
 
             if(SendDetail?.success && isN(SendDetail?.id)){
-                var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
+                var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', account:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
-                    await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
+                    await RecoverIdToBd({ id:SendDetail.id, account:AccountDetail.sbd, cid:messageId });
                 }
             }
 
@@ -305,11 +305,11 @@ const Complaint_Init = async function(event){
 
                     if(!isN(eml)){
                         
-                        var eml_dt = await LeadEmailDetail({ id:eml, bd:AccountDetail.sbd, type:'eml' });
+                        var eml_dt = await LeadEmailDetail({ id:eml, account:AccountDetail.sbd, type:'eml' });
 
                         var upload_query = await LeadEmailUpdate({
                             id:eml_dt.id,
-                            bd:AccountDetail.sbd,
+                            account:AccountDetail.sbd,
                             fields:{
                                 rjct: 1,
                                 sndi: 2,
@@ -377,12 +377,12 @@ const Bounce_Init = async function(event){
 
         if(AccountDetail?.sbd){
 
-            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd });
+            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', account:AccountDetail.sbd });
 
             if(SendDetail?.success && isN(SendDetail?.id)){
-                var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
+                var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', account:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
-                    await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
+                    await RecoverIdToBd({ id:SendDetail.id, account:AccountDetail.sbd, cid:messageId });
                 }
             }
 
@@ -390,7 +390,7 @@ const Bounce_Init = async function(event){
 
                 let upd = await LeadSendUpdate({
                     id:SendDetail.id,
-                    bd:AccountDetail.sbd,
+                    account:AccountDetail.sbd,
                     fields:{
                         est:process.env.ID_SNDEST_RBT,
                         bnc: JSON.stringify(message.bounce),
@@ -459,13 +459,13 @@ const Open_Init = async function(event){
     }else if(header['SUMR-FLJ'] == 'ec'){
 
         var AccountDetail = await GetAccountDetail({ type:'enc', id:header['SUMR-CL'] }),
-            SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd }),
+            SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', account:AccountDetail.sbd }),
             datetme = getTimefromISO(message.open.timestamp);
 
         if(SendDetail?.success && isN(SendDetail?.id)){
-            var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
+            var SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', account:AccountDetail.sbd });
             if(SendDetail?.success && isN(SendDetail.cid)){
-                await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
+                await RecoverIdToBd({ id:SendDetail.id, account:AccountDetail.sbd, cid:messageId });
             }
         }
 
@@ -473,7 +473,7 @@ const Open_Init = async function(event){
 
             let insert = await LeadSendOpened({
                 id:SendDetail.id,
-                bd:AccountDetail.sbd,
+                account:AccountDetail.sbd,
                 fields:{
                     snd:SendDetail.id,
                     date:datetme.d.date,
@@ -520,14 +520,14 @@ const Click_Init = async function(event){
 
         if(AccountDetail?.sbd){
                 
-            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', bd:AccountDetail.sbd }),
+            var SendDetail = await GetLeadSendDetail({ id:messageId, type:'id', account:AccountDetail.sbd }),
                 datetme = getTimefromISO(message.click.timestamp),
                 ttobd = '';
 
             if(SendDetail?.success && isN(SendDetail?.id)){
-                SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', bd:AccountDetail.sbd });
+                SendDetail = await GetLeadSendDetail({ id:header['SUMR-ID'], type:'enc', account:AccountDetail.sbd });
                 if(SendDetail?.success && isN(SendDetail.cid)){
-                    await RecoverIdToBd({ id:SendDetail.id, bd:AccountDetail.sbd, cid:messageId });
+                    await RecoverIdToBd({ id:SendDetail.id, account:AccountDetail.sbd, cid:messageId });
                 }
             }
 
@@ -544,7 +544,7 @@ const Click_Init = async function(event){
 
                 let insert = await LeadSendClicked({
                     id:SendDetail.id,
-                    bd:AccountDetail.sbd,
+                    account:AccountDetail.sbd,
                     fields:{
                         lnk:lnk_dt.id,
                         snd:SendDetail.id,
