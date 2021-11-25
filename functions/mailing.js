@@ -72,7 +72,7 @@ const LeadSend_FindCampaign = async function( params=null ){
         else{ field = 'id_ecsndcmpg'; }
 
         let get = await DBGet({
-                            query: `SELECT ecsndcmpg_cmpg FROM ${ DBSelector('ec_snd_cmpg') } WHERE ${field}=? LIMIT 1`,
+                            query: `SELECT ecsndcmpg_cmpg FROM ${ DBSelector('ec_snd_cmpg',{ account:params?.account }) } WHERE ${field}=? LIMIT 1`,
                             data:[ params?.id ]
                         });
 
@@ -242,19 +242,6 @@ exports.AccountSendOpened = async function(params=null){
 
 exports.GetLeadSendDetail = async function(params=null){
 
-
-    /* TEMPO TO SEE CAMPAIGN DIFF */
-    console.log('Check TIME');
-    let CampaignSend = await LeadSend_FindCampaign({ id:params?.id, type:'snd' })
-        PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
-
-        console.log('CampaignSend:', CampaignSend);
-        console.log('PutOnQueueUpdate:', PutOnQueueUpdate);
-
-
-
-        
-
     let fields,
         response={ success:false },
         database='';
@@ -271,6 +258,17 @@ exports.GetLeadSendDetail = async function(params=null){
     if(get){
         response.success = true;
         if(!isN(get[0])){
+
+            /* TEMPO TO SEE CAMPAIGN DIFF */
+            console.log('Check TIME');
+            let CampaignSend = await LeadSend_FindCampaign({ id:get[0].id_ecsnd, type:'snd', account:params?.account })
+                PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
+    
+            console.log('params?.id:', get[0].id_ecsnd);
+            console.log('CampaignSend:', CampaignSend);
+            console.log('PutOnQueueUpdate:', PutOnQueueUpdate);
+        
+
             response.id = get[0].id_ecsnd;
             response.cid = get[0].ecsnd_id;
             response.ec = get[0].ecsnd_ec;
@@ -379,7 +377,7 @@ exports.LeadSendOpened = async function(params=null){
 
             response.id = SaveRDS?.insertId;
 
-            let CampaignSend = await LeadSend_FindCampaign({ id:params?.fields?.snd, type:'snd' })
+            let CampaignSend = await ({ id:params?.fields?.snd, type:'snd' })
                 PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
 
             if(PutOnQueueUpdate.success){
@@ -441,7 +439,7 @@ exports.LeadSendClicked = async function(params=null){
                 
                 response.url = { id:SaveUrl?.insertId };
 
-                let CampaignSend = await LeadSend_FindCampaign({ id:params?.fields?.snd, type:'snd' })
+                let CampaignSend = await LeadSend_FindCampaign({ id:params?.fields?.snd, type:'snd', account:params?.account })
                     PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
 
                 if(PutOnQueueUpdate.success){
