@@ -120,7 +120,7 @@ const BounceGetId = async function(params=null){
 
 const Send_Init = async function(event){
 
-    await SaveRequest( event );
+    //await SaveRequest( event );
 
     var response={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
@@ -170,7 +170,7 @@ const Send_Init = async function(event){
 
 const Delivery_Init = async function(event){
 
-    await SaveRequest( event );
+    //await SaveRequest( event );
 
     var response={ success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
@@ -249,7 +249,7 @@ const Delivery_Init = async function(event){
 
 const Complaint_Init = async function(event){
     
-    await SaveRequest( event );
+    //await SaveRequest( event );
 
     var response = { success:false },
         message = JSON.parse(event.Records[0].Sns.Message),
