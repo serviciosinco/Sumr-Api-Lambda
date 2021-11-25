@@ -11,7 +11,7 @@ exports.GetAccountDetail = async function(params=null){
     else{ fields = 'id_cl'; }
 
     let get = await DBGet({
-                    query: `SELECT id_cl, cl_enc, cl_sbd FROM `+DBSelector('_cl')+` WHERE ${fields}=? LIMIT 1`,
+                    query: `SELECT id_cl, cl_enc, cl_sbd FROM ${ DBSelector('_cl') } WHERE ${fields}=? LIMIT 1`,
                     data:[ params?.id ]
                 });
 

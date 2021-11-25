@@ -14,7 +14,7 @@ exports.ListDetail = async function(params=null){
     if(!isN(params?.key)){ whr.push( `sisslctp_key='${params?.key}'` ); }
     if(!isN(whr)){ whrs = whr.join(' AND '); }
 
-    let get = await DBGet({ query: `SELECT * FROM `+DBSelector('VW_lists')+` WHERE ${whrs}` });
+    let get = await DBGet({ query: `SELECT * FROM ${ DBSelector('VW_lists') } WHERE ${whrs}` });
     
     if(get){
 

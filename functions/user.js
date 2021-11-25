@@ -10,7 +10,7 @@ exports.UserDetail = async function(params=null){
     else{ fields = 'id_us'; }
 
     let get = await DBGet({
-                        query: `SELECT id_us FROM `+DBSelector('us')+` WHERE ${fields}=? LIMIT 1`,
+                        query: `SELECT id_us FROM ${ DBSelector('us') } WHERE ${fields}=? LIMIT 1`,
                         data:[ params?.id ]
                     });
 
@@ -42,7 +42,7 @@ exports.UserUpdate = async function(params=null){
     if(!isN(params?.id) && !isN(upload_query)){
 
         let SaveRDS =  await DBSave({
-            query:`UPDATE `+DBSelector('us')+` SET ${upload_query} WHERE id_us=? LIMIT 1`,
+            query:`UPDATE ${ DBSelector('us') } SET ${upload_query} WHERE id_us=? LIMIT 1`,
             data:[ params?.id ]
         });
 

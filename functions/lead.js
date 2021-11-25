@@ -13,7 +13,7 @@ exports.LeadEmailDetail = async function(params=null){
     else{ fields = 'id_cnteml'; }
 
     let result = await DBGet({
-                        query: `SELECT id_cnteml FROM `+DBSelector('cnt_eml',{ account:params?.account })+` WHERE ${fields}=? LIMIT 1`,
+                        query: `SELECT id_cnteml FROM ${ DBSelector('cnt_eml',{ account:params?.account }) } WHERE ${fields}=? LIMIT 1`,
                         data:[ params?.id ]
                     });
 
@@ -47,7 +47,7 @@ exports.LeadEmailUpdate = async function(params=null){
     if(!isN(params?.id) && !isN(upload_query)){
 
         let SaveRDS =  await DBSave({
-            query:`UPDATE `+DBSelector('cnt_eml',{ account:params?.account })+` SET ${upload_query} WHERE id_cnteml=? LIMIT 1`,
+            query:`UPDATE ${ DBSelector('cnt_eml',{ account:params?.account }) } SET ${upload_query} WHERE id_cnteml=? LIMIT 1`,
             data:[ params?.id ]
         });
 
