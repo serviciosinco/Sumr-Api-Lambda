@@ -47,7 +47,7 @@ const GetCampaignDetail = async( params )=>{
                 DiffInDays = DiffTime / (1000 * 3600 * 24);
 
             response.diff = {
-                days:DiffInDays
+                days:Math.round(DiffInDays)
             }
 
         }
