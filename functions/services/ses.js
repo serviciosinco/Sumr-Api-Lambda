@@ -129,7 +129,7 @@ const Delivery_Init = async function(event){
 
         let SendDetail = await CustomerSendDetail({ id:messageId, type:'id' });
 
-        if(!isN(SendDetail.id)){
+        if(SendDetail?.id){
 
             let upd = await CustomerSendUpdate({
                 id:SendDetail.id,
@@ -208,7 +208,7 @@ const Complaint_Init = async function(event){
 
         let SendDetail = await CustomerSendDetail({ id:messageId, type:'id' });
 
-        if(!isN(SendDetail.id)){
+        if(SendDetail?.id){
 
             Object.keys(message.complaint.complainedRecipients).forEach(async function(key){
 
@@ -298,7 +298,7 @@ const Bounce_Init = async function(event){
 
         let SendDetail = await CustomerSendDetail({ id:messageId, type:'id' });
 
-        if(!isN(SendDetail.id)){
+        if(SendDetail?.id){
 
             let upd = await CustomerSendUpdate({
                 id:SendDetail.id,
