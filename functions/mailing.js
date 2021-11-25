@@ -77,6 +77,49 @@ const LeadSend_FindCampaign = async function( params=null ){
 
 };
 
+
+const CampaignQueueToUpdate = async function(params=null){
+
+    let response={ status:false };
+
+    if(params?.id){
+
+        let CampaignDetail = CampaignSend?.id ? await GetCampaignDetail({ id:params?.id }) : null ;
+
+        if(CampaignDetail?.id && !CampaignDetail?.total?.update){
+
+            let updateDynamo = await DYNAMO.update({
+                                    TableName: `${process?.env?.DYNAMO_PRFX}-ec-cmpg`,
+                                    Key:{ id:CampaignSend?.id },
+                                    UpdateExpression: 'set eccmpg_tot_upd=:vtotupd',
+                                    ExpressionAttributeValues:{
+                                        ":vtotupd": 1
+                                    },
+                                    ReturnValues:"ALL_NEW"
+                                }).promise();
+
+            if(updateDynamo?.Attributes){
+
+                let updateRDS = await DBSave({
+                    query:`UPDATE ${ DBSelector('ec_cmpg') } SET eccmpg_tot_upd=? WHERE id_eccmpg=? LIMIT 1`,
+                    data:[ 1, CampaignSend?.id ]
+                });
+
+                if(!isN(updateRDS) && !isN(updateRDS.affectedRows) && updateRDS.affectedRows > 0){
+                    response.success = true;
+                }
+
+            }
+
+        }
+
+    }
+
+    return response;
+
+}
+
+
 exports.CustomerSendDetail  = async function(params=null){
 
     let fields,
@@ -309,34 +352,11 @@ exports.LeadSendOpened = async function(params=null){
 
             response.id = SaveRDS?.insertId;
 
-            let CampaignSend = await LeadSend_FindCampaign({ id:params?.fields?.snd, type:'snd' }),
-                CampaignDetail = CampaignSend?.id ? await GetCampaignDetail({ id:CampaignSend?.id }) : null ;
+            let CampaignSend = await LeadSend_FindCampaign({ id:params?.fields?.snd, type:'snd' })
+                PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
 
-            if(CampaignDetail?.id && !CampaignDetail?.total?.update){
-
-                let updateDynamo = await DYNAMO.update({
-                                        TableName: `${process?.env?.DYNAMO_PRFX}-ec-cmpg`,
-                                        Key:{ id:CampaignSend?.id },
-                                        UpdateExpression: 'set eccmpg_tot_upd=:vtotupd',
-                                        ExpressionAttributeValues:{
-                                            ":vtotupd": 1
-                                        },
-                                        ReturnValues:"ALL_NEW"
-                                    }).promise();
-
-                if(updateDynamo?.Attributes){
-
-                    let updateRDS = await DBSave({
-                        query:`UPDATE ${ DBSelector('ec_cmpg') } SET eccmpg_tot_upd=? WHERE id_eccmpg=? LIMIT 1`,
-                        data:[ 1, CampaignSend?.id ]
-                    });
-
-                    if(!isN(updateRDS) && !isN(updateRDS.affectedRows) && updateRDS.affectedRows > 0){
-                        response.success = true;
-                    }
-
-                }
-
+            if(PutOnQueueUpdate.success){
+                response.success = true;
             }
 
         }else {
