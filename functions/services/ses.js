@@ -4,7 +4,7 @@ const   { DBSave, DBSelector, DBClose } = require('../connection'),
         { GetAccountDetail } = require('../customer'),
         { LeadEmailDetail, LeadEmailUpdate } = require('../lead'),
         { UserDetail, UserUpdate } = require('../user'),
-        { CustomerSendDetail, CustomerSendUpdate, CustomerSendOpened, GetLeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked, PushmailLinkDetail } = require('../mailing'),
+        { CustomerSendDetail, CustomerSendUpdate, AccountSendOpened, GetLeadSendDetail, LeadSendUpdate, LeadSendOpened, LeadSendClicked, PushmailLinkDetail } = require('../mailing'),
         userAgent = require('user-agent-parse'),
         AWS = require('aws-sdk'),
         docClient = new AWS.DynamoDB({ apiVersion: '2012-08-10' });
@@ -380,7 +380,7 @@ const Open_Init = async function(event){
         
         if(!isN(SendDetail?.id)){
 
-            let insert = await CustomerSendOpened({
+            let insert = await AccountSendOpened({
                 id:SendDetail.id,
                 fields:{
                     snd:SendDetail.id,
