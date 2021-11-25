@@ -20,7 +20,7 @@ exports.GetAccountDetail = async function(params=null){
         if(!isN(get[0])){
             response.id = get[0].id_cl;
             response.enc = get[0].cl_enc;
-            response.sbd = 'sumr_c_'+get[0].cl_sbd;
+            response.sbd = get[0].cl_sbd;
         }
     }else {
         response.error = 'No ID result';
