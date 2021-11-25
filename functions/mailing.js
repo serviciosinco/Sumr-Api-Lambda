@@ -302,6 +302,12 @@ exports.LeadSendUpdate = async function(params=null){
             data:[ params?.id ]
         });
 
+        /* TEMPO TO SEE CAMPAIGN DIFF */
+        console.log('Check TIME');
+        let CampaignSend = await LeadSend_FindCampaign({ id:params?.id, type:'snd' })
+            PutOnQueueUpdate = await CampaignQueueToUpdate({ id:CampaignSend?.id });
+
+
         if(SaveRDS?.affectedRows > 0){
 
             if(!isN(params?.fields?.est)){
