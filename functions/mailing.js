@@ -1,6 +1,6 @@
 const   mysql = require('promise-mysql'),
         { DBGet, DBSave, DBSelector } = require('./connection'),
-        { isN, AwsDeviceId } = require('./common'),
+        { isN, AwsDeviceId, nToBol } = require('./common'),
         AWS = require('aws-sdk'),
         DYNAMO = new AWS.DynamoDB.DocumentClient();
 
