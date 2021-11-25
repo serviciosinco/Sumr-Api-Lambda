@@ -4,7 +4,7 @@ const { isN } = require('./common');
 exports.GetAccountDetail = async function(params=null){
 
     let fields='',
-        response={ success:false };
+        response={};
 
     if(params?.type == 'enc'){ fields = 'cl_enc'; }
     else if(params?.type == 'sbd'){ fields = 'cl_sbd'; }
@@ -16,7 +16,6 @@ exports.GetAccountDetail = async function(params=null){
                 });
 
     if(get){
-        response.success = true;
         if(!isN(get[0])){
             response.id = get[0].id_cl;
             response.enc = get[0].cl_enc;
