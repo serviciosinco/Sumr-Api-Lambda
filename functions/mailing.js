@@ -100,7 +100,7 @@ const CampaignQueueToUpdate = async function(params=null){
 
         let CampaignDetail = params?.id ? await GetCampaignDetail({ id:params?.id }) : null ; console.log('CampaignDetail:', CampaignDetail);
 
-        if(CampaignDetail?.id && !CampaignDetail?.total?.update && CampaignDetail?.diff?.days < 60){
+        if(CampaignDetail?.id && !CampaignDetail?.total?.update && ( CampaignDetail?.diff?.days < 60 || !CampaignDetail?.diff )){
 
             let updateDynamo = await DYNAMO.update({
                                     TableName: `${process?.env?.DYNAMO_PRFX}-ec-cmpg`,
