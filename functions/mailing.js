@@ -301,34 +301,46 @@ exports.LeadSendUpdate = async function(params=null){
 
     if(!isN(params?.id) && !isN(upload_query)){
 
+        let updateMain = `UPDATE ${ DBSelector('ec_snd',{ account:params?.account }) }`;
+        let updateQueue = `UPDATE ${ DBSelector('ec_snd_queue',{ account:params?.account }) }`;
+
         let SaveRDS =  await DBSave({
-            query:`UPDATE ${ DBSelector('ec_snd',{ account:params?.account }) } SET ${upload_query} WHERE id_ecsnd=? LIMIT 1`,
+            query:`${updateMain} SET ${upload_query} WHERE id_ecsnd=? LIMIT 1`,
             data:[ params?.id ]
         });
 
         if(SaveRDS?.affectedRows > 0){
 
-            if(!isN(params?.fields?.est)){
-                
-                let updateDynamo = await DYNAMO.update({
-                    TableName: `${process?.env?.DYNAMO_PRFX}-ec-snd`,
-                    Key:{ id:params?.id },
-                    UpdateExpression: 'set ecsnd_est=:vest',
-                    ExpressionAttributeValues:{
-                        ":vest": params?.fields?.est
-                    },
-                    ReturnValues:"ALL_NEW"
-                }).promise();
-                
-                if(updateDynamo?.Attributes){
+            let SaveQueueRDS =  await DBSave({
+                query:`${updateQueue} SET ${upload_query} WHERE id_ecsnd=? LIMIT 1`,
+                data:[ params?.id ]
+            });
+
+            if(SaveQueueRDS?.affectedRows > 0){
+
+                if(!isN(params?.fields?.est)){
+                    
+                    let updateDynamo = await DYNAMO.update({
+                        TableName: `${process?.env?.DYNAMO_PRFX}-ec-snd`,
+                        Key:{ id:params?.id },
+                        UpdateExpression: 'set ecsnd_est=:vest',
+                        ExpressionAttributeValues:{
+                            ":vest": params?.fields?.est
+                        },
+                        ReturnValues:"ALL_NEW"
+                    }).promise();
+                    
+                    if(updateDynamo?.Attributes){
+
+                        response.success = true;
+
+                    }
+
+                }else{
 
                     response.success = true;
 
                 }
-
-            }else{
-
-                response.success = true;
 
             }
 
